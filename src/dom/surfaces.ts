@@ -15,8 +15,12 @@ export const DEFAULT_SURFACE_SELECTOR = [
 export const SCAN = {
   /** Rediscover elements this often, ms (route changes, lazy content). */
   rediscoverMs: 2000,
-  /** Re-measure at most this often while scrolling, ms. */
+  /** Re-measure at most this often while scrolling or after DOM changes, ms. */
   remeasureMs: 120,
+  /** Re-measure at least this often anyway (layout shifts without DOM changes), ms. */
+  refreshMs: 1000,
+  /** After a DOM change, rediscover elements no sooner than this, ms. */
+  rediscoverAfterChangeMs: 250,
   /** Keep at most this many candidates. */
   maxCandidates: 400,
 } as const;
@@ -37,6 +41,8 @@ export class SurfaceScanner {
   private discoveredAt = -Infinity;
   private measuredAt = -Infinity;
   private dirty = true;
+  /** The DOM changed since the last discovery (a route change, say). */
+  private changed = false;
   private cleanups: (() => void)[] = [];
 
   constructor(private win: Window, private selector: string, private host: Element) {
@@ -45,6 +51,18 @@ export class SurfaceScanner {
       // Capture so scrolling inside overflow containers counts too.
       target.addEventListener(type, mark, { passive: true, capture: true });
       this.cleanups.push(() => target.removeEventListener(type, mark, { capture: true }));
+    }
+    // Frameworks swap page content without scrolling or resizing. The callback only
+    // sets flags; the work happens on the next list() call, throttled.
+    const Observer = (win as Window & { MutationObserver?: typeof MutationObserver }).MutationObserver;
+    if (Observer) {
+      const mo = new Observer((records) => {
+        if (records.every((r) => host.contains(r.target))) return; // our own pet and poops
+        this.changed = true;
+        this.dirty = true;
+      });
+      mo.observe(win.document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+      this.cleanups.push(() => mo.disconnect());
     }
   }
 
@@ -55,15 +73,21 @@ export class SurfaceScanner {
 
   /** Current surfaces in viewport px. Cheap to call every frame. */
   list(now: number, lim: Limits): readonly Surface[] {
-    if (now - this.discoveredAt >= SCAN.rediscoverMs) {
+    const sinceDiscover = now - this.discoveredAt;
+    if (sinceDiscover >= SCAN.rediscoverMs || (this.changed && sinceDiscover >= SCAN.rediscoverAfterChangeMs)) {
       this.discover();
       this.discoveredAt = now;
+      this.changed = false;
       this.dirty = true;
     }
-    if (this.dirty && now - this.measuredAt >= SCAN.remeasureMs) {
+    const sinceMeasure = now - this.measuredAt;
+    if ((this.dirty && sinceMeasure >= SCAN.remeasureMs) || sinceMeasure >= SCAN.refreshMs) {
       this.cache = this.measure(lim);
       this.measuredAt = now;
       this.dirty = false;
+    } else if (this.changed) {
+      // Between measurements, never hand out an element that has left the page.
+      this.cache = this.cache.filter((s) => this.byId.get(s.id)?.isConnected);
     }
     return this.cache;
   }
@@ -111,6 +135,7 @@ export class SurfaceScanner {
     const vh = doc.documentElement.clientHeight;
     const out: Surface[] = [];
     for (const el of this.elements) {
+      if (!el.isConnected) continue;
       const r = el.getBoundingClientRect();
       if (r.height < 4 || r.top < lim.minTop || r.top > vh - 4) continue;
       const left = Math.max(0, r.left);

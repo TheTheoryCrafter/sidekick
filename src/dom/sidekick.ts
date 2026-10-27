@@ -25,11 +25,26 @@ import { SpriteView, type SheetInfo } from './sprite-view';
 import { DEFAULT_STORAGE_KEY, SettingsStore } from './storage';
 import { DEFAULT_SURFACE_SELECTOR, SurfaceScanner } from './surfaces';
 
+/**
+ * A pet given as data instead of a folder URL, e.g. the bundled
+ * `import creamCat from "sidekick-pet/pets/cream-cat"`.
+ */
+export interface PetDefinition {
+  id: string;
+  /** The manifest object (same shape as manifest.json). */
+  manifest: unknown;
+  /** URL of the sprite sheet (a file URL or a data: URL). */
+  sheetUrl: string;
+}
+
+/** A pet folder name under `petsBaseUrl`, or a pet given as data. */
+export type PetRef = string | PetDefinition;
+
 export interface SidekickOptions {
-  /** Pet folder name under `petsBaseUrl`. Default "cream-cat". */
-  pet?: string;
+  /** The pet to show first. Default "cream-cat". */
+  pet?: PetRef;
   /** Pets the visitor may switch between (built-in menu, setPet). Default: just `pet`. */
-  pets?: string[];
+  pets?: PetRef[];
   /** URL of the folder that holds pet folders. Default "/pets/". */
   petsBaseUrl?: string;
   /** Folder URLs for pets that live somewhere else, by id. Wins over `petsBaseUrl`. */
@@ -60,6 +75,11 @@ export interface SidekickOptions {
   menu?: boolean;
   /** ms without input before the "visitor-idle" event. Default 60000. */
   idleAfter?: number;
+  /**
+   * "auto" follows the visitor's prefers-reduced-motion setting, "reduced" always keeps
+   * the pet from moving on its own, "full" ignores the setting. Default "auto".
+   */
+  motion?: 'auto' | 'reduced' | 'full';
 }
 
 export type SidekickStatus = 'loading' | 'running' | 'paused' | 'disabled' | 'error' | 'destroyed';
@@ -112,6 +132,8 @@ const LOG = '[sidekick]';
 
 /** Where the page's single instance lives, on `window`. */
 export const INSTANCE = Symbol.for('sidekick');
+/** Fired on `window` when the page's instance is created or destroyed (any bundle copy). */
+export const INSTANCE_EVENT = 'sidekick:instance';
 
 export const clampScale = (n: unknown): number => {
   const v = Math.round(Number(n));
@@ -143,6 +165,9 @@ export class Sidekick {
     idleAfter: number;
   };
   private poopOpts: PoopOptions | null;
+  /** Pets given as data, by id. */
+  private petDefs = new Map<string, PetDefinition>();
+  private calm = false;
   private rng: Rng;
   private behavior: Behavior = defaultBehavior();
   private settings: Settings;
@@ -168,8 +193,13 @@ export class Sidekick {
   private globalCleanups: (() => void)[] = [];
 
   constructor(private win: Window, options: SidekickOptions = {}) {
-    const pet = options.pet ?? 'cream-cat';
-    const pets = [...new Set([pet, ...(options.pets ?? [])])];
+    const refId = (r: PetRef) => {
+      if (typeof r === 'string') return r;
+      this.petDefs.set(r.id, r);
+      return r.id;
+    };
+    const pet = refId(options.pet ?? options.pets?.[0] ?? 'cream-cat');
+    const pets = [...new Set([pet, ...(options.pets ?? []).map(refId)])];
     this.opts = {
       pets,
       petsBaseUrl: withSlash(options.petsBaseUrl ?? '/pets/'),
@@ -184,6 +214,7 @@ export class Sidekick {
     this.store = new SettingsStore(win, options.storageKey ?? DEFAULT_STORAGE_KEY, options.persist !== false);
     this.settings = initialSettings({ enabled: options.enabled !== false, pet }, this.store.read(), pets);
     this.behavior.addCondition('poop-spot', () => this.poopSpotIsGood());
+    this.watchMotion(options.motion ?? 'auto');
 
     this.host = createHost(win.document);
     if (this.opts.menu) this.menu = new Menu(win, this.host.stage);
@@ -372,7 +403,10 @@ export class Sidekick {
     this.listeners.clear();
     this.settingsListeners.clear();
     const g = this.win as Window & { [INSTANCE]?: Sidekick };
-    if (g[INSTANCE] === this) delete g[INSTANCE];
+    if (g[INSTANCE] === this) {
+      delete g[INSTANCE];
+      this.win.dispatchEvent(new Event(INSTANCE_EVENT));
+    }
   }
 
   // ---- Mounting -----------------------------------------------------------
@@ -481,17 +515,45 @@ export class Sidekick {
     return p;
   }
 
+  private watchMotion(mode: 'auto' | 'reduced' | 'full'): void {
+    if (mode !== 'auto') {
+      this.calm = mode === 'reduced';
+      return;
+    }
+    let mq: MediaQueryList;
+    try {
+      mq = this.win.matchMedia('(prefers-reduced-motion: reduce)');
+    } catch {
+      return;
+    }
+    this.calm = mq.matches;
+    const onChange = () => { this.calm = mq.matches; };
+    mq.addEventListener?.('change', onChange);
+    this.globalCleanups.push(() => mq.removeEventListener?.('change', onChange));
+  }
+
   private async fetchPet(id: string): Promise<LoadedPet> {
+    const def = this.petDefs.get(id);
+    if (def) {
+      const v = validateManifest(def.manifest);
+      v.warnings.forEach((w) => console.warn(LOG, `${id}:`, w));
+      if (!v.manifest) throw new Error(`Pet "${id}" has an invalid manifest: ${v.errors.join(' ')}`);
+      return { manifest: v.manifest, sheet: await this.loadSheet(def.sheetUrl) };
+    }
     const base = this.opts.petUrls[id] ?? `${this.opts.petsBaseUrl}${encodeURIComponent(id)}/`;
     const res = await this.win.fetch(`${base}manifest.json`);
     if (!res.ok) throw new Error(`Could not load pet "${id}" (${res.status}).`);
     const v = validateManifest(await res.json());
     v.warnings.forEach((w) => console.warn(LOG, `${id}:`, w));
     if (!v.manifest) throw new Error(`Pet "${id}" has an invalid manifest: ${v.errors.join(' ')}`);
+    return { manifest: v.manifest, sheet: await this.loadSheet(new URL(v.manifest.sheet, new URL(base, this.win.location.href)).href) };
+  }
+
+  private async loadSheet(url: string): Promise<SheetInfo> {
     const img = this.win.document.createElement('img');
-    img.src = new URL(v.manifest.sheet, new URL(base, this.win.location.href)).href;
+    img.src = url;
     await img.decode();
-    return { manifest: v.manifest, sheet: { url: img.src, width: img.naturalWidth, height: img.naturalHeight } };
+    return { url: img.src, width: img.naturalWidth, height: img.naturalHeight };
   }
 
   private syncVisibility(): void {
@@ -593,6 +655,7 @@ export class Sidekick {
       hour: new Date().getHours(),
       cursor: this.cursor,
       surfaces: this.surfaces(minY, m.hitbox[2] * px),
+      calm: this.calm,
     };
   }
 

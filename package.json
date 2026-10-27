@@ -1,18 +1,50 @@
 {
   "name": "sidekick-pet",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A tiny pixel pet that lives on top of any website.",
   "type": "module",
   "license": "MIT",
-  "sideEffects": false,
+  "keywords": ["pet", "website pet", "pixel art", "oneko", "mascot", "react"],
+  "module": "./dist/sidekick.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/sidekick.mjs"
+    },
+    "./react": {
+      "types": "./dist/types/react.d.ts",
+      "import": "./dist/react.mjs"
+    },
+    "./pets/cream-cat": {
+      "types": "./dist/types/pets/cream-cat.d.ts",
+      "import": "./dist/pets/cream-cat.mjs"
+    },
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "unpkg": "./dist/sidekick.js",
+  "jsdelivr": "./dist/sidekick.js",
+  "files": ["dist"],
+  "sideEffects": ["./dist/sidekick.js"],
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true }
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "typescript": "5.6.3",
     "vite": "5.4.11",
     "vitest": "2.1.8"

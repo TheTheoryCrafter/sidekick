@@ -8,7 +8,7 @@ Framework-agnostic TypeScript core, no runtime dependencies, rendered in a Shado
 - `npm run dev`: Vite dev server on http://localhost:5199. Demos are at `/demo/index.html`.
 - `npm test`: Vitest unit tests (pure logic only, Node environment).
 - `npm run typecheck`: `tsc --noEmit`.
-- `npm run build`: library build (set up in M7).
+- `npm run build`: builds `dist/` (ESM, React wrapper, pet module, script-tag IIFE, pets, types) and fails over the size budget.
 
 ## Layout
 - `src/core/`: pure logic, no DOM access, fully unit-tested. Manifest, roles, sprite
@@ -52,8 +52,7 @@ Keep this list current. Add to it whenever a choice is made.
   `documentElement.clientHeight`, and walk bounds keep the whole sprite on screen whichever
   way it faces.
 - Walk speed is 30 sheet px/s × pixel size × `traits.speed`.
-- `petsBaseUrl` defaults to `/pets/`. The script-tag build will derive it from its own `src`
-  (M7).
+- `petsBaseUrl` defaults to `/pets/`. The script-tag build derives it from its own `src`.
 - **CSP-safe.** Styles are set only through CSSOM properties (`el.style.foo = ...`). There
   are no `<style>` tags, no `style=""` attributes, no `eval` and no `new Function`.
 - Two layers inside one Shadow DOM host. The pet uses a `position: fixed` layer in viewport
@@ -105,6 +104,56 @@ Keep this list current. Add to it whenever a choice is made.
 - The role `tired` is new, with fallback → ambient. Sleep plays `tired`, then `sleep`, and
   the cream cat maps `tired` to `yawn`.
 - `setTimeScale(1–60)` is a debug aid that speeds up sim time, motion included.
+
+**Packaging, SSR, CSP and reduced motion (M7)**
+- **`npm run build`** (`scripts/build.mjs`, Vite JS API) produces:
+  - `dist/sidekick.mjs`: the ESM core.
+  - `dist/react.mjs`: the React wrapper, with a `"use client"` banner, importing
+    `./sidekick.mjs`.
+  - `dist/pets/cream-cat.mjs`: the pet as data, with its sheet inlined as a data URL.
+  - `dist/sidekick.js`: the minified IIFE for the script tag.
+  - `dist/pets/<id>/`: copied pet folders.
+  - `dist/types/`: `tsc -p tsconfig.build.json`.
+  - Target is es2019. The ESM keeps its whitespace because consumers' bundlers minify it.
+- **Package.** It is ESM-only. `exports` has `.`, `./react`, `./pets/cream-cat` and
+  `./dist/*`; `unpkg`/`jsdelivr` point at `dist/sidekick.js`; `files: ["dist"]`;
+  `sideEffects: ["./dist/sidekick.js"]`; and React is an optional peer (>=18, since
+  `useSyncExternalStore` is needed).
+- **Size budget.** The gzipped IIFE must stay at or under 20 kB, and the build fails above
+  that. It measures 18.2 kB (53 kB minified). The plan's "about 12 kB" was an early
+  estimate. The weight is the whole feature set plus validation messages; a later pass
+  could mangle private names or shorten messages.
+- **Pets as data.** `PetDefinition { id, manifest, sheetUrl }`; `pet` and `pets` accept ids
+  or definitions (`PetRef`). `import creamCat from 'sidekick-pet/pets/cream-cat'` is the
+  zero-config path for bundlers (38.6 kB gzipped, loaded only if imported). Its data URL
+  needs `img-src data:`, so strict-CSP sites serve the `pets/` folder instead.
+- **Script tag** (`src/entries/script.ts`).
+  - It reads `data-*` attributes (`optionsFromDataset`, unit-tested).
+  - The pets folder defaults to `pets/` next to the script's own URL, so a CDN copy works
+    with no configuration.
+  - It sets `window.Sidekick = { init, get, destroy }` and starts on DOMContentLoaded
+    unless `data-auto="false"`, then fires `sidekick:ready` on `document`.
+  - A second copy of the script reuses the instance.
+- **React** (`src/react.ts`, no JSX). `<Sidekick {...options} onEvent />` reads options on
+  first mount only and destroys the pet when the last `<Sidekick>` unmounts. Teardown is
+  deferred one task, so StrictMode's unmount and remount keep the instance.
+  `useSidekick()` uses `useSyncExternalStore` with a cached snapshot and a server snapshot
+  `{ ready: false }`. It finds the instance through `watchInstance()`, which listens for
+  the `sidekick:instance` event on `window` (so it works across bundle copies).
+- **SSR.** No module touches `window` or `document` at import. `init` returns null and the
+  React wrapper renders nothing on the server. `test/ssr.test.ts` covers the source, React
+  `renderToString` and the built module.
+- **CSP.** The `m7-script` demo runs under `default-src 'self'; style-src 'self';
+  script-src 'self'; img-src 'self'` with zero violations while the menu, poop, drag and
+  scale are exercised. An injected `<style>` is blocked, which proves the policy is live.
+  The build was scanned for eval, `new Function`, innerHTML, `<style`, cssText and style
+  attributes: none.
+- **Reduced motion.** `motion: 'auto' | 'reduced' | 'full'` (default auto follows
+  `prefers-reduced-motion`, including live changes). With `BrainCtx.calm`, rules whose
+  action has any moving step are skipped, and moving steps started by `play()` end at once
+  without moving. Animations, reactions, poop and drag/drop still work.
+- **Instance events.** `INSTANCE_EVENT = 'sidekick:instance'` is dispatched on `window` at
+  init and destroy.
 
 **Host API, settings, sensors and menu (M6)**
 - **Lifecycle.** The instance owns its `<sidekick-pet>` host for its whole life. The pet
@@ -233,6 +282,22 @@ Keep this list current. Add to it whenever a choice is made.
 - **The `surfaces` option** takes a selector string, or `false` to keep the pet on the floor.
   `debugSurfaces()` is a demo aid.
 - **Measured:** the M4 demo runs with at most 6 ms frames while jumping constantly.
+- **Fixed in M7: spasm on route change.**
+  - **Cause.** React removed the heading the cat stood on. The cached surface list
+    (re-measured only on scroll or resize) still held its old edge, so every frame the cat
+    landed on the ghost edge, the fresh check found the element gone, and it fell again
+    (about 30 landings a second).
+  - **Scanner fix.** A MutationObserver (childList, plus class/style/hidden attributes,
+    ignoring our own host) only sets flags. The next `list()` rediscovers elements (at
+    most every 250 ms after a change) and re-measures. Between measurements, disconnected
+    entries are filtered out.
+  - **Periodic refresh.** Surfaces are also re-measured at least every 1 s to catch layout
+    shifts without DOM changes.
+  - **Brain guard.** After losing its footing (`fallOff`), the pet ignores that surface
+    for landing for 400 ms (`BrainState.skipLand`), so inconsistent data can never cause a
+    land/fall loop. There is a regression test with alternating stale and fresh lists.
+  - **Verified.** In the React demo, six route changes with the cat on the heading each
+    give exactly one landing.
 
 **Interaction and physics (M3)**
 - **Body modes.** `BrainState.mode` is `ground`, `held` or `air`. No rule fires and `play`
@@ -309,8 +374,7 @@ Keep this list current. Add to it whenever a choice is made.
 ## Conventions
 - Pure modules take time and randomness as parameters (`now`, `rng`). Never read
   `Date.now()` or `Math.random()` deep inside `src/core`.
-- No runtime dependencies. Keep the bundle small, with a budget of about 12 kB gzipped for
-  the core (checked in M7).
+- No runtime dependencies. The script-tag build must stay at or under 20 kB gzipped (`npm run build` enforces it).
 - Demos may use `<style>` tags. Library code may not.
 - Never rewrite text files with Windows PowerShell 5.1 `Get-Content`/`Set-Content`. It reads
   UTF-8 without a BOM as Windows-1252 and writes a BOM, which corrupted CLAUDE.md once. Use
@@ -324,7 +388,7 @@ Keep this list current. Add to it whenever a choice is made.
 - [x] M4 Surfaces: standing on and jumping between elements
 - [x] M5 Poop
 - [x] M6 Host events, sensors, persistence, built-in menu
-- [ ] M7 Packaging (IIFE, ESM, React), SSR, CSP, size budget, reduced motion
+- [x] M7 Packaging (IIFE, ESM, React), SSR, CSP, size budget, reduced motion
 - [ ] M8 Integration guide for theorycrafter (React Router + shadcn profile menu, via Lovable)
 - [ ] M9 README
 
@@ -338,3 +402,6 @@ Keep this list current. Add to it whenever a choice is made.
   this repo.
 - **Asset licence (settled 2026-10-28).** The user confirmed the cream cat sheet may be
   redistributed, so it can ship inside the npm package and the CDN/script-tag build.
+- **Installing from git (M8).** `dist/` is git-ignored. If theorycrafter installs Sidekick
+  from GitHub instead of npm, add a `prepare` script that builds, or commit `dist/` on a
+  release branch. Decide this in M8.

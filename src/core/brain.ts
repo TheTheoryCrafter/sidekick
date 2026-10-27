@@ -47,6 +47,12 @@ export interface BrainState {
   thrown: boolean;
   /** Whether the current flight is a deliberate jump (part of an action). */
   jumping: boolean;
+  /**
+   * A surface the pet just lost its footing on, not to be landed on again until
+   * `until` (sim ms). Stops a land/fall loop on a surface whose measurements disagree,
+   * e.g. a stale edge of an element a framework has just removed.
+   */
+  skipLand?: { id: number; until: number } | null;
   action: RunningAction | null;
   /** Animation playing, and the sim time it started. */
   anim: string;
@@ -82,6 +88,11 @@ export interface BrainCtx {
   cursor: Vec | null;
   /** Page elements the pet can stand on, in viewport px. */
   surfaces: readonly Surface[];
+  /**
+   * Reduced motion: the pet never moves on its own (no walking, running, following
+   * or jumping). Animations, reactions and dragging still work.
+   */
+  calm: boolean;
 }
 
 export type BrainEffect =
@@ -97,6 +108,8 @@ export interface BrainResult {
 
 export const BRAIN = {
   tickMs: 1000,
+  /** After falling off a surface, ignore it for landing this long, ms. */
+  skipLandMs: 400,
   minWanderPx: 80,
   /** A run goes at least this share of the walkable width. */
   minRunShare: 0.4,
@@ -152,6 +165,7 @@ function jumpTarget(s: BrainState, ctx: BrainCtx) {
 
 /** Whether an action's first motion can happen right now. */
 function canStart(def: ActionDef, s: BrainState, ctx: BrainCtx): boolean {
+  if (ctx.calm && def.steps.some((st) => (st.motion ?? 'none') !== 'none')) return false;
   const motion = def.steps[0]?.motion;
   if (motion === 'follow') return followTarget(s, ctx) !== null;
   if (motion === 'jump') return jumpTarget(s, { ...ctx, rng: () => 0.5 }) !== null;
@@ -230,6 +244,11 @@ function stepTarget(step: ActionStep, s: BrainState, ctx: BrainCtx): number | nu
 function beginStep(s: BrainState, def: ActionDef, index: number, ctx: BrainCtx): BrainState {
   const step = def.steps[index]!;
   const animated = setAnim(s, step.role, ctx);
+
+  if (ctx.calm && (step.motion ?? 'none') !== 'none') {
+    // Reduced motion: a moving step (from play() or a host action) is skipped.
+    return { ...animated, action: { ...animated.action!, step: index, stepStart: ctx.now, deadline: ctx.now, targetX: null, speed: 0 } };
+  }
 
   if (step.motion === 'jump') {
     const t = jumpTarget(s, ctx);
@@ -357,7 +376,8 @@ export function release(s: BrainState, vel: Vec, ctx: BrainCtx): BrainResult {
 /** Lose footing: the surface went away or scrolled up out of reach. */
 function fallOff(s: BrainState, ctx: BrainCtx, fx: BrainEffect[]): BrainState {
   const next = endAction(s, fx);
-  return setAnim({ ...next, mode: 'air', on: null, vel: { x: 0, y: 0 }, thrown: false, jumping: false }, 'fall', ctx);
+  const skipLand = s.on === null ? null : { id: s.on, until: ctx.now + BRAIN.skipLandMs };
+  return setAnim({ ...next, mode: 'air', on: null, vel: { x: 0, y: 0 }, thrown: false, jumping: false, skipLand }, 'fall', ctx);
 }
 
 function stepFlight(prev: BrainState, ctx: BrainCtx, fx: BrainEffect[]): BrainState {
@@ -367,7 +387,9 @@ function stepFlight(prev: BrainState, ctx: BrainCtx, fx: BrainEffect[]): BrainSt
   let s: BrainState = { ...prev, body: { x: r.pos.x, y: r.pos.y, facing }, vel: r.vel };
 
   // Page elements are one-way platforms: landing on one beats reaching the floor.
-  const sf = prev.vel.y >= 0 || r.vel.y > 0 ? landingSurface(prev.body.y, r.pos.y, r.pos.x, ctx.surfaces) : null;
+  const skip = prev.skipLand && ctx.now < prev.skipLand.until ? prev.skipLand.id : null;
+  const candidates = skip === null ? ctx.surfaces : ctx.surfaces.filter((x) => x.id !== skip);
+  const sf = prev.vel.y >= 0 || r.vel.y > 0 ? landingSurface(prev.body.y, r.pos.y, r.pos.x, candidates) : null;
   let impact: number;
   if (sf) {
     impact = Math.max(0, r.vel.y);

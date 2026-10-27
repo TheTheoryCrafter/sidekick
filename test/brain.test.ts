@@ -30,7 +30,7 @@ function scripted(...values: number[]): Rng {
 }
 
 function makeCtx(behavior: Behavior, over: Partial<BrainCtx> = {}): BrainCtx {
-  return { now: 0, dt: 1 / 60, rng: zero, manifest: pet, behavior, minX: 0, maxX: 1000, minY: 50, floorY: 600, petW: 64, petH: 64, walkSpeed: 60, hour: 12, cursor: null, surfaces: [], ...over };
+  return { now: 0, dt: 1 / 60, rng: zero, manifest: pet, behavior, minX: 0, maxX: 1000, minY: 50, floorY: 600, petW: 64, petH: 64, walkSpeed: 60, hour: 12, cursor: null, surfaces: [], calm: false, ...over };
 }
 
 function idleState(x = 500): BrainState {
@@ -388,6 +388,25 @@ describe('surfaces', () => {
     }
   });
 
+  it('does not land/fall loop on a stale edge of a removed element', () => {
+    // The pet stands on surface 1; the element is gone (its fresh measurement is
+    // missing), but a stale copy of its edge is still in the list it lands against.
+    const ctx = makeCtx(b, { surfaces: [] });
+    const falling = stepBrain(onShelf(), ctx).state;
+    expect(falling.mode).toBe('air');
+    const stale = makeCtx(b, { surfaces: [shelf] });
+    let s = falling;
+    const lands: number[] = [];
+    for (let i = 1; i <= 90; i++) {
+      // Every other step the list says the shelf exists, then not (stale vs fresh).
+      const r = stepBrain(s, { ...(i % 2 ? stale : ctx), now: i * (1000 / 60) });
+      if (r.effects.some((e) => e.type === 'event' && e.name === 'land')) lands.push(i);
+      s = r.state;
+    }
+    expect(lands.length).toBeLessThanOrEqual(1);
+    expect(s.body.y).toBe(600); // it fell through to the floor
+  });
+
   it('goes back to the floor when its surface scrolls below the window', () => {
     const s = stepBrain(onShelf(), makeCtx(b, { surfaces: [{ ...shelf, top: 900 }] })).state;
     expect(s).toMatchObject({ on: null, mode: 'ground', body: { y: 600 } });
@@ -439,6 +458,38 @@ describe('surfaces', () => {
     const r2 = run(r1.state, makeCtx(b, { surfaces: [shelf] }), 2000);
     expect(r2.state.on).toBe(1);
     expect(r2.effects.find((e) => e.type === 'event' && e.name === 'land')).toMatchObject({ rule: 'land', payload: { surface: true } });
+  });
+});
+
+describe('reduced motion', () => {
+  const b = behaviorWith((b) => {
+    b.addAction({ id: 'walk', role: 'move', motion: 'wander' });
+    b.addAction({ id: 'stroll-then-sit', steps: [{ role: 'move', motion: 'wander' }, { role: 'ambient', duration: 500 }] });
+    b.addRule({ id: 'walk', on: 'idle', action: 'walk', priority: 10 });
+    b.addRule({ id: 'mixed', on: 'poke', action: 'stroll-then-sit', priority: 10 });
+    b.addRule({ id: 'sit', on: 'idle', action: 'a', priority: 0 });
+  });
+
+  it('skips rules for actions that move', () => {
+    expect(stepBrain(idleState(), makeCtx(b)).state.action?.id).toBe('walk');
+    expect(stepBrain(idleState(), makeCtx(b, { calm: true })).state.action?.id).toBe('a');
+    expect(dispatch(idleState(), 'poke', makeCtx(b, { calm: true })).state.action).toBeNull();
+  });
+
+  it('a moving step started directly does not move the pet', () => {
+    const ctx = makeCtx(b, { calm: true, rng: scripted(0.9) });
+    const p = play(idleState(500), 'stroll-then-sit', ctx);
+    expect(p.state.action).toMatchObject({ targetX: null, deadline: 0 });
+    const r = run(p.state, makeCtx(b, { calm: true }), 100);
+    expect(r.state.body.x).toBe(500);
+    expect(r.state.action).toMatchObject({ id: 'stroll-then-sit', step: 1 });
+  });
+
+  it('dragging and dropping still work', () => {
+    const ctx = makeCtx(b, { calm: true });
+    const held = holdAt(grab(idleState(), ctx).state, 300, 400, ctx);
+    const r = run(release(held, { x: 0, y: 0 }, ctx).state, ctx, 1500);
+    expect(r.state).toMatchObject({ mode: 'ground', body: { x: 300, y: 600 } });
   });
 });
 

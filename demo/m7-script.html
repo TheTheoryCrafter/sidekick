@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Strict CSP: no inline styles or scripts, no eval, nothing from other origins.
+       (ws: is only for the Vite dev server's live reload.) -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self' ws:; object-src 'none'; base-uri 'none'" />
+  <title>Sidekick · M7 script tag + strict CSP</title>
+  <link rel="stylesheet" href="./m7.css" />
+  <script src="./m7-csp-watch.js"></script>
+  <!-- The whole integration for a plain site: one tag. Requires `npm run build` first. -->
+  <script src="/dist/sidekick.js" data-menu data-storage-key="sidekick:m7" defer></script>
+</head>
+<body>
+  <main>
+    <h1>One script tag, strict CSP</h1>
+    <p>This page loads the built <code>dist/sidekick.js</code> with a Content-Security-Policy that forbids inline styles, inline scripts, eval and other origins. The cat must work normally and the counter below must stay at zero.</p>
+    <p class="status">CSP violations: <b id="violations">0</b> <span id="details"></span></p>
+    <p class="status">window.Sidekick: <b id="global">…</b> · pet: <b id="petStatus">…</b></p>
+    <pre>&lt;script src="https://cdn.jsdelivr.net/npm/sidekick-pet/dist/sidekick.js"
+        data-menu defer&gt;&lt;/script&gt;</pre>
+    <p>Right-click or long-press the cat for its menu. Pets load from <code>dist/pets/</code>, next to the script.</p>
+    <div class="cards">
+      <article><h2>Plain HTML</h2><p>WordPress and Webflow work the same way: paste the tag into the site's custom code.</p></article>
+      <article><h2>No build step</h2><p>Options come from <code>data-*</code> attributes.</p></article>
+      <article><h2>Page code</h2><p><code>window.Sidekick.get().emit('success')</code></p></article>
+    </div>
+    <p><button id="emit" type="button">emit('success') from page code</button></p>
+  </main>
+</body>
+</html>
