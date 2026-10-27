@@ -68,6 +68,12 @@ export class SurfaceScanner {
     return this.cache;
   }
 
+  /** The element behind a surface id, if it is still on the page. */
+  elementOf(id: number): Element | null {
+    const el = this.byId.get(id);
+    return el && el.isConnected ? el : null;
+  }
+
   /** Fresh measurement of one surface (the one the pet stands on), or null if it's gone. */
   measureOne(id: number): Surface | null {
     const el = this.byId.get(id);

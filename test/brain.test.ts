@@ -467,6 +467,21 @@ describe('default behavior with the cream cat', () => {
     expect(r.state.body.x).toBeLessThanOrEqual(1000);
   });
 
+  it('poops only when the page layer allows it, and emits "poop" after the animation', () => {
+    const cat = validateManifest(creamCat).manifest!;
+    const b = defaultBehavior();
+    // Make poop the only free-time choice that can fire.
+    for (const r of b.rulesFor('idle')) if (r.id !== 'poop') b.removeRule(r.id);
+    const ctx = makeCtx(b, { manifest: cat });
+    expect(stepBrain(idleState(), ctx).state.action?.id).toBe(FALLBACK_ACTION.id);
+    b.addCondition('poop-spot', () => true);
+    const p = stepBrain(idleState(), ctx).state;
+    expect(p.action?.id).toBe('poop');
+    expect(p.anim).toBe('poop');
+    const r = run(p, ctx, 1600); // poop: 6 frames at 4 fps
+    expect(r.effects).toContainEqual({ type: 'emit', name: 'poop', action: 'poop' });
+  });
+
   it('wakes up for a host event', () => {
     const cat = validateManifest(creamCat).manifest!;
     const ctx = makeCtx(defaultBehavior(), { manifest: cat });

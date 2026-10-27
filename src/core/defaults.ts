@@ -25,6 +25,8 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
   },
   { id: 'hide', role: 'hide' },
   { id: 'jump', role: 'jump', motion: 'jump' },
+  // The pile appears when the step ends (the "poop" emit), behind the pet.
+  { id: 'poop', role: 'poop', emit: 'poop', interruptible: false },
   { id: 'eat', role: 'tool-used' },
   { id: 'celebrate', role: 'success', duration: 2500 },
   { id: 'faint', role: 'error', duration: 4000 },
@@ -45,6 +47,9 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'sleep-when-sleepy', on: 'idle', if: 'sleepy', chance: 0.3, priority: 50, action: 'sleep' },
   { id: 'zoomies', on: 'idle', chance: 0.06, cooldown: 90_000, priority: 40, action: 'zoomies' },
   { id: 'jump', on: 'idle', chance: 0.5, scaleBy: 'jumpiness', cooldown: 6000, priority: 35, action: 'jump' },
+  // "poop-spot" is supplied by the page layer: poop is on, the pet has a pile sprite,
+  // there is room for another, and nothing clickable is under the spot.
+  { id: 'poop', on: 'idle', if: 'poop-spot', chance: 0.05, cooldown: 90_000, priority: 33, action: 'poop' },
   { id: 'hide', on: 'idle', chance: 0.05, cooldown: 120_000, priority: 30, action: 'hide' },
   { id: 'walk', on: 'idle', chance: 0.55, priority: 10, action: 'walk' },
   { id: 'sit', on: 'idle', chance: 1, priority: 0, action: 'sit' },
@@ -63,6 +68,7 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'tool-completed', on: 'tool-completed', priority: 60, cooldown: 3000, action: 'eat' },
   { id: 'success', on: 'success', priority: 60, cooldown: 3000, action: 'celebrate' },
   { id: 'error', on: 'error', priority: 70, cooldown: 3000, action: 'faint' },
+  { id: 'poop-cleaned', on: 'poop-cleaned', priority: 25, chance: 0.5, cooldown: 5000, notDuring: ['sleep'], action: 'celebrate' },
 ];
 
 export const DEFAULT_CONDITIONS: Record<string, ConditionFn> = {
@@ -70,6 +76,8 @@ export const DEFAULT_CONDITIONS: Record<string, ConditionFn> = {
   sleepy: ({ now, lastDone }) => now - (lastDone.sleep ?? 0) >= SLEEPY_AFTER_MS,
   /** 22:00–06:00 in the visitor's time zone. */
   night: ({ hour }) => hour >= 22 || hour < 6,
+  /** Replaced by the page layer, which can see what's under the pet. */
+  'poop-spot': () => false,
   /** For "land": the pet was thrown rather than set down. */
   thrown: ({ payload }) => !!(payload as { thrown?: boolean } | undefined)?.thrown,
 };

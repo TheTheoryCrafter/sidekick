@@ -13,6 +13,9 @@ import { createHost, type Host } from './host';
 import { Loop } from './loop';
 import { PointerInput } from './pointer';
 import { DEFAULT_SURFACE_SELECTOR, SurfaceScanner } from './surfaces';
+import { PoopLayer } from './poop-layer';
+import { normalizePoopOptions, poopSpot, type PoopOptions } from '../core/poop';
+import { resolveRole } from '../core/roles';
 import type { Surface } from '../core/surfaces';
 import { SpriteView, type SheetInfo } from './sprite-view';
 
@@ -31,6 +34,12 @@ export interface SidekickOptions {
    * are always skipped. Default: headings, paragraphs, images, buttons, cards...
    */
   surfaces?: string | false;
+  /**
+   * Whether the pet poops now and then, or limits: at most `max` poops at once
+   * (default 5), each gone after `ttl` ms of activity (default 10 minutes).
+   * Clicking a poop clears it. Default true.
+   */
+  poop?: boolean | { max?: number; ttl?: number };
 }
 
 export type SidekickStatus = 'loading' | 'running' | 'paused' | 'error' | 'destroyed';
@@ -83,7 +92,9 @@ export const clampScale = (n: unknown): number => {
 };
 
 export class Sidekick {
-  private opts: Required<Omit<SidekickOptions, 'seed'>>;
+  private opts: Required<Omit<SidekickOptions, 'seed' | 'poop'>>;
+  private poopOpts: PoopOptions | null;
+  private poops: PoopLayer | null = null;
   private rng: Rng;
   private behavior: Behavior = defaultBehavior();
   private host: Host | null = null;
@@ -111,6 +122,7 @@ export class Sidekick {
       scale: clampScale(options.scale ?? 2),
       surfaces: options.surfaces === undefined ? DEFAULT_SURFACE_SELECTOR : options.surfaces,
     };
+    this.poopOpts = normalizePoopOptions(options.poop);
     this.rng = options.seed === undefined ? Math.random : seededRng(options.seed);
     void this.start();
   }
@@ -158,6 +170,11 @@ export class Sidekick {
   on(listener: (e: SidekickEvent) => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  /** Remove every poop from the page. */
+  clearPoops(): void {
+    this.poops?.clear();
   }
 
   setScale(scale: number): void {
@@ -216,6 +233,8 @@ export class Sidekick {
     this.input = null;
     this.scanner?.destroy();
     this.scanner = null;
+    this.poops?.destroy();
+    this.poops = null;
     this.cleanups.forEach((fn) => fn());
     this.cleanups = [];
     this.listeners.clear();
@@ -237,6 +256,12 @@ export class Sidekick {
       this.host = createHost(doc);
       this.view = new SpriteView(doc, this.host.stage, manifest, sheet);
       if (this.opts.surfaces) this.scanner = new SurfaceScanner(this.win, this.opts.surfaces, this.host.el);
+      const pile = resolveRole(manifest, 'poopEntity', () => 0);
+      if (this.poopOpts && pile) {
+        this.poops = new PoopLayer(this.win, this.host.stage, this.view.el, this.host.el, manifest, sheet, pile,
+          this.poopOpts, () => this.emit('poop-cleaned'));
+      }
+      this.behavior.addCondition('poop-spot', () => this.poopSpotIsGood());
       this.input = new PointerInput(this.win, this.view.hit, {
         hover: () => this.emit('hover'),
         click: (kind) => this.emit(kind),
@@ -339,6 +364,27 @@ export class Sidekick {
     this.simTime += dt;
     this.apply(stepBrain(this.state, this.ctx(dt)));
     this.checkNear();
+    this.poops?.expire(this.simTime);
+  }
+
+  /** Where the next poop would go, in viewport px. */
+  private nextPoopSpot(): { x: number; y: number } | null {
+    const s = this.state;
+    if (!s || !this.manifest || s.mode !== 'ground') return null;
+    return poopSpot(s.body.x, s.body.y, s.body.facing, this.manifest.frameSize[0] * this.pixelSize());
+  }
+
+  private poopSpotIsGood(): boolean {
+    const spot = this.nextPoopSpot();
+    return !!spot && !!this.poops && this.poops.hasRoom && this.poops.isSafeAt(spot.x, spot.y, this.pixelSize());
+  }
+
+  /** The poop step finished: drop the pile if the spot is (still) safe. */
+  private dropPoop(): void {
+    const spot = this.nextPoopSpot();
+    if (!spot || !this.poops || !this.poops.isSafeAt(spot.x, spot.y, this.pixelSize())) return;
+    const on = this.state!.on;
+    this.poops.drop(spot.x, spot.y, on === null ? null : this.scanner?.elementOf(on) ?? null, this.simTime);
   }
 
   /** Emit "near" when the cursor comes close, once per approach. */
@@ -364,6 +410,7 @@ export class Sidekick {
   private apply(r: BrainResult): void {
     this.state = r.state;
     for (const e of r.effects) {
+      if (e.type === 'emit' && e.name === 'poop') this.dropPoop();
       for (const fn of this.listeners) {
         try {
           fn(e);
@@ -382,6 +429,7 @@ export class Sidekick {
   private render(): void {
     const s = this.state;
     if (!s || !this.view) return;
+    this.poops?.render(this.simTime, this.pixelSize(), this.win.devicePixelRatio || 1);
     this.view.draw({
       anim: s.anim,
       elapsed: this.simTime - s.animStart,

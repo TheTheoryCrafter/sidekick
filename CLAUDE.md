@@ -106,6 +106,39 @@ Keep this list current. Add to it whenever a choice is made.
   the cream cat maps `tired` to `yawn`.
 - `setTimeScale(1–60)` is a debug aid that speeds up sim time, motion included.
 
+**Poop (M5)**
+- **The action.** It is `{ role: 'poop', emit: 'poop', interruptible: false }`. A grab still
+  cancels it, and then nothing is dropped. The pile is dropped when the step's `poop` emit
+  reaches the instance, and only if the spot is still safe.
+- **Placement.** The pile sits behind the pet on its tail side, 0.6 pet widths from its
+  feet (`poopSpot`), and is drawn under the pet.
+- **Rules.**
+  - Free time: `poop` at priority 33, chance 0.05, 90 s cooldown, `if: 'poop-spot'`.
+  - `poop-cleaned` → celebrate (chance 0.5, not while asleep).
+  - The pure default for `poop-spot` is `false`. The instance replaces it: true when poop
+    is on, the pet has its own `poopEntity` role, fewer than `max` piles exist, and the
+    spot is safe. A pet without a pile sprite never poops.
+- **Safety check** (`PoopLayer.isSafeAt`).
+  - The pile's footprint must be fully inside the viewport.
+  - None of 9 points inside the footprint, nor 3 points just below it across its width,
+    may land on `INTERACTIVE_SELECTOR` (links, buttons, form controls, ARIA widgets,
+    `[onclick]`, `[tabindex]`, contenteditable, media, iframes) or inside one.
+  - The probes use `elementsFromPoint`, skipping our host. The 3-point "below" check was
+    added after a pile slipped through the gap between two buttons.
+- **Footprint.** The pile's opaque bounds are measured once from the sheet with a canvas.
+  If the sheet is cross-origin without CORS, the fallback is the centre half of the frame.
+  Only that area takes clicks.
+- **Pinning.** A pile is pinned to the surface element under the pet (`{ el, dx, dy }`,
+  re-measured every frame, so it follows scrolling, inner scroll boxes and layout shifts),
+  or to the page in document coordinates when the pet is on the floor. If its element
+  leaves the DOM (a route change), the pile is removed. Piles live in the same fixed
+  stage, so there is still one Shadow DOM layer.
+- **Lifetime.** Clicking a pile removes it with a 200 ms opacity fade (a CSSOM transition)
+  and emits `poop-cleaned`.
+  - The `poop` option is `true`, `false` or `{ max = 5, ttl = 10 min }`.
+  - `ttl` counts sim time, so piles don't expire while the tab is hidden.
+  - Beyond `max`, the oldest pile goes. `clearPoops()` removes them all.
+
 **Surfaces and jumping (M4)**
 - **Surfaces are one-way platforms.** A page element's top edge is a `Surface
   { id, left, right, top }` in viewport px. `BrainState.on` holds the surface id, or null
@@ -235,7 +268,7 @@ Keep this list current. Add to it whenever a choice is made.
 - [x] M2 Behavior and rules engine, random idle actions, debug panel
 - [x] M3 Interaction: hover, near, click, double-click, tap, drag, drop and throw
 - [x] M4 Surfaces: standing on and jumping between elements
-- [ ] M5 Poop
+- [x] M5 Poop
 - [ ] M6 Host events, sensors, persistence, built-in menu
 - [ ] M7 Packaging (IIFE, ESM, React), SSR, CSP, size budget, reduced motion
 - [ ] M8 Integration guide for theorycrafter (React Router + shadcn profile menu, via Lovable)

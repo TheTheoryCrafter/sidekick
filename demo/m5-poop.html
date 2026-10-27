@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekick · M5 poop</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.55 system-ui, sans-serif; background: #f2efe8; color: #222; }
+    .bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e3ddd3; font-size: 14px; }
+    .bar button { font: inherit; padding: 3px 9px; }
+    #status { font: 12px ui-monospace, monospace; flex-basis: 100%; }
+    main { max-width: 980px; margin: 0 auto; padding: 24px 16px 240px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 28px 20px; margin: 40px 0; }
+    .card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .card h3 { margin: 0 0 6px; font-size: 16px; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+    .links a, .links button { display: inline-block; padding: 10px 14px; background: #2f6feb; color: #fff; border: 0; border-radius: 6px; text-decoration: none; font: inherit; }
+    .floor-links { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: none; gap: 0; background: #fff; border-top: 1px solid #ddd; z-index: 10; }
+    .floor-links.on { display: flex; }
+    .floor-links a { flex: 1; display: flex; align-items: center; justify-content: center; color: #2f6feb; border-right: 1px solid #eee; }
+    #log { font: 12px ui-monospace, monospace; background: #fff; border: 1px solid #e3ddd3; border-radius: 8px; padding: 8px; height: 160px; overflow: auto; white-space: pre-wrap; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <b>M5 · Poop</b>
+    <button id="now">poop now</button>
+    <label><input type="checkbox" id="often" /> poop often</label>
+    <button id="clear">clear all</button>
+    <label><input type="checkbox" id="floorLinks" /> links along the bottom</label>
+    <a href="?ttl=20000">reload with 20 s lifetime</a>
+    <a href="./index.html">All demos</a>
+    <div id="status"></div>
+  </div>
+  <main>
+    <h1>Poop</h1>
+    <p>Now and then the cat squats and leaves a pile behind it (on its tail side). Click a pile to clear it. It may cheer when you do. Piles stay put when you scroll: on a card they stick to the card, on the floor they stick to the page. At most 5 at once; each one disappears after 10 minutes (or 20 s with the link above).</p>
+    <p>It never poops over anything clickable. Tick "links along the bottom" to fill the floor with links: the cat stops pooping on the floor, and "poop now" plays the animation but leaves nothing behind.</p>
+
+    <div class="links">
+      <a href="#a">A link</a><a href="#b">Another link</a><button>A button</button><button>One more</button><a href="#c">Link</a>
+    </div>
+
+    <pre id="log"></pre>
+
+    <div class="grid">
+      <div class="card" data-sidekick-surface><h3>Card one</h3><p>Poop on a card sticks to the card.</p></div>
+      <div class="card" data-sidekick-surface><h3>Card two</h3><p>Scroll and it moves with it.</p></div>
+      <div class="card" data-sidekick-surface><h3>Card three</h3><p>Plain text underneath is fine.</p></div>
+    </div>
+    <p style="height: 900px"></p>
+  </main>
+  <nav class="floor-links" id="floorBar">
+    <a href="#1">Home</a><a href="#2">Search</a><a href="#3">Library</a><a href="#4">Profile</a><a href="#5">Settings</a>
+  </nav>
+  <script type="module" src="./m5-poop.ts"></script>
+</body>
+</html>
