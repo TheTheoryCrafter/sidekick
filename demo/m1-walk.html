@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekick · M1 walk</title>
+  <style>
+    /* Hostile site CSS: none of this may reach the pet. */
+    * { box-sizing: border-box; }
+    div, sidekick-pet { outline: 2px dashed hotpink !important; filter: hue-rotate(90deg); }
+    body { margin: 0; font: 16px/1.6 Georgia, serif; background: #fbf8f2; color: #222; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 160px; }
+    .panel { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e5dfd3; font: 14px system-ui, sans-serif; outline: none !important; filter: none; }
+    .panel button { font: inherit; padding: 4px 10px; }
+    pre#debug { margin: 0; font: 12px ui-monospace, monospace; white-space: pre-wrap; flex-basis: 100%; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+    .row button, .row a { font: 15px system-ui, sans-serif; }
+    #clicks { font: 14px system-ui, sans-serif; color: #1a7f37; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <strong>M1 · walk</strong>
+    <label>Scale <select id="scale"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+    <button id="again">Call init() again</button>
+    <button id="destroy">destroy()</button>
+    <button id="start">init()</button>
+    <a href="./index.html">All demos</a>
+    <pre id="debug"></pre>
+  </div>
+  <main>
+    <h1>A page with a cat on it</h1>
+    <p>The cat lives along the bottom of the window. It sits and does idle things for a few seconds, then walks somewhere else. It doesn't react to anything yet; that comes in later milestones.</p>
+    <p>This page has hostile CSS on purpose: every <code>div</code> gets a pink dashed outline and a hue-rotate filter. The cat must stay unaffected: cream colored, no outline.</p>
+    <div class="row">
+      <button id="btn">Click me</button>
+      <a href="#anchor">A link</a>
+      <span id="clicks"></span>
+    </div>
+    <p>Scroll down. The cat stays at the bottom of the window rather than at the bottom of the page.</p>
+    <p style="height: 1600px">Lots of space…</p>
+    <p id="anchor">Bottom of the page. Put a button under the cat by scrolling until this paragraph is at the bottom of the window, then click through the cat:</p>
+    <button id="btn2">Button under the cat</button>
+  </main>
+  <script type="module" src="./m1-walk.ts"></script>
+</body>
+</html>

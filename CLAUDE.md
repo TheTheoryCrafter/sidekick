@@ -38,8 +38,21 @@ Keep this list current. Add to it whenever a choice is made.
 
 **Rendering (from M1)**
 - Each sprite is a `div` with `background-image`/`background-position` and
-  `image-rendering: pixelated`. The scale is a whole number, positions are rounded to whole
-  pixels, and mirroring uses `scaleX(-1)`.
+  `image-rendering: pixelated`, and mirroring uses `scaleX(-1)`.
+- Crispness: one sheet pixel equals `round(scale Ã— devicePixelRatio)` device pixels
+  (`SpriteView.pixelSize`), and positions are snapped to whole device pixels. At a DPR of
+  1.25, scale 3 is therefore 3.2 CSS px per sheet pixel, which is exactly 4 device pixels.
+- `SpriteView` writes a style property only when its value changed (size, frame, transform).
+- The host is a custom element `<sidekick-pet>` appended to `<html>`, after `<body>`, so
+  frameworks that hydrate `<body>` never see it. The custom tag is immune to `div {}` rules.
+  Its own styles are inline `!important` with `all: initial`, so even
+  `* { ... !important }` on the site can't reach it.
+- Bodies use viewport CSS px with `(x, y)` at the manifest anchor (the feet). The floor is
+  `documentElement.clientHeight`, and walk bounds keep the whole sprite on screen whichever
+  way it faces.
+- Walk speed is 30 sheet px/s Ã— pixel size Ã— `traits.speed`.
+- `petsBaseUrl` defaults to `/pets/`. The script-tag build will derive it from its own `src`
+  (M7).
 - **CSP-safe.** Styles are set only through CSSOM properties (`el.style.foo = ...`). There
   are no `<style>` tags, no `style=""` attributes, no `eval` and no `new Function`.
 - Two layers inside one Shadow DOM host. The pet uses a `position: fixed` layer in viewport
@@ -51,6 +64,13 @@ Keep this list current. Add to it whenever a choice is made.
   `step()` functions. It pauses while `document.hidden`.
 
 **Behavior and rules (from M2)**
+- M1 ships a placeholder brain, `src/core/wander.ts`: idle for 3â€“9 s with a random ambient
+  animation, or walk to a random spot at least 80 px away. One-shot ambient animations are
+  swapped for another when they finish. In M2 the action/rule engine takes over the
+  decisions, and `PetBody` plus the `anim`/`animStart` bookkeeping are kept.
+- Simulation time (`simTime`) advances only in fixed 1/60 s steps while the loop runs.
+  Animation timing uses sim time, so pausing never skips frames. Frame gaps over 250 ms
+  are capped, not fast-forwarded.
 - Actions and rules are plain data. An action is built from a small set of motion primitives
   written in code (none, wander, run, jump-to-surface, follow-cursor). Advanced hosts may
   pass a custom `step` function.
@@ -58,8 +78,9 @@ Keep this list current. Add to it whenever a choice is made.
   The rule engine is pure and gets `now` and `rng` injected.
 
 **Platform**
-- **Singleton.** The instance lives under `Symbol.for('sidekick')` on `window`. A second
-  `init` returns the existing instance.
+- **Singleton.** The instance lives under `Symbol.for('sidekick')` on `window`
+  (`INSTANCE` in `src/dom/sidekick.ts`). A second `init` returns the existing instance and
+  ignores its options. `destroy()` clears the slot, so a later `init` starts a fresh pet.
 - **SSR-safe.** No top-level access to `window` or `document`, and `init` does nothing
   without a DOM.
 - Page changes are detected by polling `location.href` in the loop. `history` is never
@@ -88,7 +109,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 ## Milestones
 - [x] M0 Scaffold, manifest validator, role resolver, sprite viewer
-- [ ] M1 Shadow DOM host, renderer, loop, walk and idle along the floor
+- [x] M1 Shadow DOM host, renderer, loop, walk and idle along the floor
 - [ ] M2 Behavior and rules engine, random idle actions, debug panel
 - [ ] M3 Interaction: hover, near, click, double-click, tap, drag, drop and throw
 - [ ] M4 Surfaces: standing on and jumping between elements
@@ -101,6 +122,8 @@ Keep this list current. Add to it whenever a choice is made.
 ## Open notes
 - cream-cat artwork faces **right**. Checked in the M0 viewer: walk, run and jump all head
   right, so the default `facing: "right"` is correct.
+- Commits use the repo-local identity `shrikarreddyk <shrikarreddyk@gmail.com>`. The
+  machine's global identity is a work account, so never use it here.
 - Node 24 LTS was installed via winget (2026-10-28). The preview tool reads
   `C:\Users\User\.claude\launch.json`, and the `sidekick-dev` entry there starts Vite for
   this repo.
