@@ -23,6 +23,6 @@ setInterval(() => {
   const d = getInstance()?.debug();
   const hosts = document.querySelectorAll('sidekick-pet').length;
   $('debug').textContent = d
-    ? `status ${d.status} · ${d.mode ?? '-'} · anim ${d.anim ?? '-'} · x ${d.x ?? '-'} y ${d.y ?? '-'} · facing ${d.facing ?? '-'} · scale ${d.scale} · sim ${(d.simTime / 1000).toFixed(1)}s · hosts in DOM: ${hosts}`
+    ? `status ${d.status} · ${d.action ?? '-'} · anim ${d.anim ?? '-'} · x ${d.x ?? '-'} y ${d.y ?? '-'} · facing ${d.facing ?? '-'} · scale ${d.scale} · sim ${(d.simTime / 1000).toFixed(1)}s · hosts in DOM: ${hosts}`
     : `no instance · hosts in DOM: ${hosts}`;
 }, 200);

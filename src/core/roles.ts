@@ -14,6 +14,7 @@ export const ROLE_FALLBACKS: Readonly<Record<string, readonly string[]>> = {
   move: [],
   zoomies: ['move'],
   sleep: [],
+  tired: [],
   hover: [],
   near: ['hover'],
   click: ['hover'],

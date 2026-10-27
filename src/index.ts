@@ -4,9 +4,11 @@
 import { INSTANCE, Sidekick, type SidekickOptions } from './dom/sidekick';
 
 export { Sidekick } from './dom/sidekick';
-export type { SidekickOptions, SidekickStatus, SidekickDebug } from './dom/sidekick';
+export type { SidekickOptions, SidekickStatus, SidekickDebug, SidekickEvent } from './dom/sidekick';
 export { validateManifest } from './core/manifest';
 export type { PetManifest, AnimationDef, Traits } from './core/manifest';
+export type { ActionInput, ActionStep, Motion, RuleInput, ConditionFn, ConditionCtx, Range } from './core/behavior';
+export { DEFAULT_ACTIONS, DEFAULT_RULES } from './core/defaults';
 
 type Global = Window & { [INSTANCE]?: Sidekick };
 

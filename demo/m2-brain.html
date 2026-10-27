@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekick · M2 brain</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: #f6f3ee; color: #222; }
+    main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 140px; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
+    section { background: #fff; border: 1px solid #e3ddd3; border-radius: 8px; padding: 12px; min-width: 0; }
+    h1 { font-size: 16px; margin: 0; padding: 12px 16px; background: #fff; border-bottom: 1px solid #e3ddd3; display: flex; gap: 16px; align-items: baseline; }
+    h1 a { font-size: 13px; font-weight: normal; }
+    h2 { font-size: 14px; margin: 0 0 8px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    button { font: inherit; padding: 3px 9px; cursor: pointer; }
+    button.on { background: #222; color: #fff; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 0; font: 12px ui-monospace, monospace; }
+    dt { color: #777; }
+    dd { margin: 0; }
+    table { border-collapse: collapse; width: 100%; font-size: 12px; }
+    td, th { text-align: left; padding: 3px 6px; border-bottom: 1px solid #eee; white-space: nowrap; }
+    tr.cool td { color: #aaa; }
+    tr.fired td { background: #fff4c2; }
+    .scroll { overflow-x: auto; }
+    #log { font: 12px ui-monospace, monospace; height: 260px; overflow: auto; margin: 0; white-space: pre-wrap; }
+    .wide { grid-column: 1 / -1; }
+    input[type=text] { font: inherit; padding: 3px 6px; width: 140px; }
+    .hint { color: #777; font-size: 12px; margin: 4px 0 0; }
+  </style>
+</head>
+<body>
+  <h1>M2 · Brain <a href="./index.html">All demos</a></h1>
+  <main>
+    <section>
+      <h2>Now</h2>
+      <dl id="now"></dl>
+      <h2 style="margin-top:12px">Time speed</h2>
+      <div class="btns" id="speed"></div>
+      <p class="hint">The cat gets sleepy after 3 simulated minutes awake. Use 60× to see it nap within seconds.</p>
+    </section>
+    <section>
+      <h2>Play an action</h2>
+      <div class="btns" id="actions"></div>
+      <h2>Emit an event</h2>
+      <div class="btns" id="events"></div>
+      <div class="btns">
+        <input type="text" id="custom" placeholder="custom event" />
+        <button id="emitCustom">emit</button>
+      </div>
+      <h2>Host-registered behavior</h2>
+      <div class="btns"><button id="register">Register "party" action + rule</button><button id="party" disabled>emit('party')</button></div>
+      <p class="hint" id="regInfo">Shows how a host site adds its own action and rule at runtime, with no code changes to Sidekick.</p>
+    </section>
+    <section class="wide">
+      <h2>Rules (highest priority first)</h2>
+      <div class="scroll"><table id="rules"></table></div>
+    </section>
+    <section class="wide">
+      <h2>What happened <button id="clear">clear</button></h2>
+      <pre id="log"></pre>
+    </section>
+  </main>
+  <script type="module" src="./m2-brain.ts"></script>
+</body>
+</html>

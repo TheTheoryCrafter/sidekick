@@ -223,6 +223,7 @@
     ],
     "move": "walk",
     "sleep": "sleep",
+    "tired": "yawn",
     "hover": "teary",
     "click": "shocked",
     "dragged": "held",
