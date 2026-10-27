@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekick · Sprite viewer</title>
+  <style>
+    :root { --bg: #f6f3ee; --card: #fff; --ink: #222; --muted: #777; --line: #e3ddd3; --warn: #b4540a; --err: #b42318; --ok: #1a7f37; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+    header { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--line); }
+    header h1 { font-size: 16px; margin: 0 12px 0 0; }
+    main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+    section { margin-bottom: 28px; }
+    h2 { font-size: 15px; margin: 0 0 8px; }
+    .msgs li.err { color: var(--err); } .msgs li.warn { color: var(--warn); } .ok { color: var(--ok); }
+    table { border-collapse: collapse; width: 100%; background: var(--card); }
+    td, th { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-weight: 600; background: #faf8f4; }
+    .tag { display: inline-block; padding: 1px 6px; border-radius: 4px; background: #eee; margin: 0 4px 2px 0; font-size: 12px; }
+    .tag.fb { background: #fff1d6; }
+    .tag.none { background: #fde2e1; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+    .card h3 { margin: 0 0 2px; font-size: 14px; }
+    .card .meta { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+    .stage { display: flex; align-items: flex-end; justify-content: center; min-height: 80px; margin-bottom: 8px; border-radius: 6px; position: relative; }
+    .bg-checker .stage, .bg-checker .strip { background: repeating-conic-gradient(#e8e8e8 0 25%, #fff 0 50%) 0 0 / 16px 16px; }
+    .bg-light .stage, .bg-light .strip { background: #fff; }
+    .bg-dark .stage, .bg-dark .strip { background: #2a2a2e; }
+    .strip { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-radius: 6px; }
+    .strip > div { outline: 1px dashed rgba(0,0,0,.12); position: relative; }
+    .strip > div.empty { outline: 2px solid var(--err); }
+    .strip > div.current { outline: 2px solid #2f6feb; }
+    .anchor { position: absolute; pointer-events: none; border-left: 1px solid rgba(255,0,80,.6); }
+    .note { color: var(--err); font-size: 12px; }
+    label { user-select: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sprite viewer</h1>
+    <label>Pet <select id="pet"></select></label>
+    <label>Scale <select id="scale"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>6</option></select></label>
+    <label><input type="checkbox" id="flip" /> Mirror</label>
+    <label><input type="checkbox" id="anchor" /> Show anchor</label>
+    <label>Background <select id="bg"><option value="checker">Checker</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+    <a href="./index.html">All demos</a>
+  </header>
+  <main>
+    <section id="summary"></section>
+    <section><h2>Roles</h2><div id="roles"></div></section>
+    <section><h2>Animations</h2><div class="grid" id="anims"></div></section>
+  </main>
+  <script type="module" src="./m0-sprites.ts"></script>
+</body>
+</html>
