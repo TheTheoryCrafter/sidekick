@@ -12,6 +12,8 @@ import { seededRng, type Rng } from '../core/rng';
 import { createHost, type Host } from './host';
 import { Loop } from './loop';
 import { PointerInput } from './pointer';
+import { DEFAULT_SURFACE_SELECTOR, SurfaceScanner } from './surfaces';
+import type { Surface } from '../core/surfaces';
 import { SpriteView, type SheetInfo } from './sprite-view';
 
 export interface SidekickOptions {
@@ -23,6 +25,12 @@ export interface SidekickOptions {
   scale?: number;
   /** Fixes the random sequence, for demos and tests. */
   seed?: number;
+  /**
+   * CSS selector for page elements the pet may stand on and jump between,
+   * or false to keep it on the floor. Elements inside [data-sidekick-ignore]
+   * are always skipped. Default: headings, paragraphs, images, buttons, cards...
+   */
+  surfaces?: string | false;
 }
 
 export type SidekickStatus = 'loading' | 'running' | 'paused' | 'error' | 'destroyed';
@@ -90,6 +98,7 @@ export class Sidekick {
   private listeners = new Set<(e: SidekickEvent) => void>();
   private pending: [string, unknown][] = [];
   private input: PointerInput | null = null;
+  private scanner: SurfaceScanner | null = null;
   private cursor: Vec | null = null;
   private cursorNear = false;
   /** Feet minus pointer at the start of a drag, so the pet doesn't jump to the pointer. */
@@ -100,6 +109,7 @@ export class Sidekick {
       pet: options.pet ?? 'cream-cat',
       petsBaseUrl: withSlash(options.petsBaseUrl ?? '/pets/'),
       scale: clampScale(options.scale ?? 2),
+      surfaces: options.surfaces === undefined ? DEFAULT_SURFACE_SELECTOR : options.surfaces,
     };
     this.rng = options.seed === undefined ? Math.random : seededRng(options.seed);
     void this.start();
@@ -193,11 +203,19 @@ export class Sidekick {
     };
   }
 
+  /** Debug only: the surfaces the pet currently sees, and the one it stands on. */
+  debugSurfaces(): { surfaces: Surface[]; on: number | null } {
+    if (!this.manifest || !this.state) return { surfaces: [], on: null };
+    return { surfaces: this.ctx(0).surfaces.slice(), on: this.state.mode === 'ground' ? this.state.on : null };
+  }
+
   destroy(): void {
     this.status = 'destroyed';
     this.loop?.stop();
     this.input?.destroy();
     this.input = null;
+    this.scanner?.destroy();
+    this.scanner = null;
     this.cleanups.forEach((fn) => fn());
     this.cleanups = [];
     this.listeners.clear();
@@ -218,6 +236,7 @@ export class Sidekick {
       this.manifest = manifest;
       this.host = createHost(doc);
       this.view = new SpriteView(doc, this.host.stage, manifest, sheet);
+      if (this.opts.surfaces) this.scanner = new SurfaceScanner(this.win, this.opts.surfaces, this.host.el);
       this.input = new PointerInput(this.win, this.view.hit, {
         hover: () => this.emit('hover'),
         click: (kind) => this.emit(kind),
@@ -283,6 +302,7 @@ export class Sidekick {
     const de = this.win.document.documentElement;
     // Keep the whole sprite on screen whichever way it faces.
     const margin = Math.max(m.anchor[0], m.frameSize[0] - m.anchor[0]) * px;
+    const minY = m.anchor[1] * px;
     return {
       now: this.simTime,
       dt: dtMs / 1000,
@@ -290,13 +310,27 @@ export class Sidekick {
       manifest: m,
       behavior: this.behavior,
       minX: margin,
-      minY: m.anchor[1] * px,
+      minY,
       maxX: de.clientWidth - margin,
       floorY: de.clientHeight,
+      petW: m.frameSize[0] * px,
+      petH: m.frameSize[1] * px,
       walkSpeed: WALK_SHEET_PX_PER_S * px * m.traits.speed,
       hour: new Date().getHours(),
       cursor: this.cursor,
+      surfaces: this.surfaces(minY, m.hitbox[2] * px),
     };
+  }
+
+  /** Surfaces for the brain, with the one underfoot measured fresh so the pet rides scrolling exactly. */
+  private surfaces(minTop: number, minWidth: number): Surface[] {
+    if (!this.scanner) return [];
+    const list = this.scanner.list(this.win.performance.now(), { minTop, minWidth });
+    const on = this.state?.mode === 'ground' ? this.state.on : null;
+    if (on === null) return list as Surface[];
+    const fresh = this.scanner.measureOne(on);
+    const others = list.filter((s) => s.id !== on);
+    return fresh ? [...others, fresh] : others;
   }
 
   private step(dtMs: number): void {

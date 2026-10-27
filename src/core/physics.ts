@@ -35,8 +35,8 @@ export interface AirResult {
   landed: number | null;
 }
 
-/** One step of free flight with bounces. */
-export function stepAir(pos: Vec, vel: Vec, dt: number, b: AirBounds): AirResult {
+/** One step of free flight. With `bounce` off, the pet lands on the first floor contact (deliberate jumps). */
+export function stepAir(pos: Vec, vel: Vec, dt: number, b: AirBounds, bounce = true): AirResult {
   let vx = vel.x;
   let vy = vel.y + PHYSICS.gravity * dt;
   let x = pos.x + vx * dt;
@@ -50,7 +50,7 @@ export function stepAir(pos: Vec, vel: Vec, dt: number, b: AirBounds): AirResult
   if (y >= b.floorY) {
     const impact = Math.max(0, vy);
     y = b.floorY;
-    if (impact < PHYSICS.landSpeed) return { pos: { x, y }, vel: { x: 0, y: 0 }, landed: impact };
+    if (!bounce || impact < PHYSICS.landSpeed) return { pos: { x, y }, vel: { x: 0, y: 0 }, landed: impact };
     vy = -impact * PHYSICS.floorBounce;
     vx *= PHYSICS.floorFriction;
   }

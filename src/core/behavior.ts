@@ -10,9 +10,16 @@ export type Range = number | readonly [number, number];
  * - wander: walk to a random spot nearby
  * - run: dash to a spot far away
  * - follow: walk up to the cursor (skipped when there is no cursor)
+ * - jump: leap onto a nearby page element, or down to the floor
+ *
+ * A rule whose action starts with a motion that can't happen right now
+ * (no cursor to follow, nothing in reach to jump to) is skipped.
  */
-export type Motion = 'none' | 'wander' | 'run' | 'follow';
-export const MOTIONS: readonly Motion[] = ['none', 'wander', 'run', 'follow'];
+export type Motion = 'none' | 'wander' | 'run' | 'follow' | 'jump';
+export const MOTIONS: readonly Motion[] = ['none', 'wander', 'run', 'follow', 'jump'];
+
+/** Pet traits a rule can scale its chance by. */
+export type TraitName = 'jumpiness' | 'clinginess';
 
 export interface ActionStep {
   /** Role to animate (never an animation name). */
@@ -58,6 +65,11 @@ export interface RuleDef {
   if: string[];
   /** Probability of firing when everything else matches, 0..1. */
   chance: number;
+  /**
+   * Scale `chance` by one of the pet's traits: chance × trait × 2, capped at 1.
+   * A trait of 0.5 leaves the chance as written.
+   */
+  scaleBy?: TraitName;
   /** ms before this rule may fire again. */
   cooldown: number;
   /**
@@ -78,6 +90,7 @@ export interface RuleInput {
   on?: string;
   if?: string | string[];
   chance?: number;
+  scaleBy?: TraitName;
   cooldown?: number;
   priority?: number;
   during?: string[];
@@ -97,6 +110,8 @@ export interface ConditionCtx {
   payload: unknown;
   /** Cursor position in viewport px, or null when unknown (touch, cursor left the page). */
   cursor: { x: number; y: number } | null;
+  /** Whether the pet is standing on a page element rather than the floor. */
+  onSurface: boolean;
 }
 
 export type ConditionFn = (ctx: ConditionCtx) => boolean;
@@ -177,6 +192,9 @@ export function normalizeRule(input: unknown): { rule: RuleDef | null; warnings:
   const conds = typeof input.if === 'string' ? [input.if] : strList(input.if) ?? [];
   const during = strList(input.during);
   const notDuring = strList(input.notDuring);
+  let scaleBy: TraitName | undefined;
+  if (input.scaleBy === 'jumpiness' || input.scaleBy === 'clinginess') scaleBy = input.scaleBy;
+  else if (input.scaleBy !== undefined) warnings.push(`${where}: "scaleBy" must be "jumpiness" or "clinginess"; ignoring it.`);
   return {
     rule: {
       id: input.id,
@@ -184,6 +202,7 @@ export function normalizeRule(input: unknown): { rule: RuleDef | null; warnings:
       on: typeof input.on === 'string' && input.on ? input.on : 'tick',
       if: conds,
       chance: num('chance', 1, 0, 1),
+      ...(scaleBy ? { scaleBy } : {}),
       cooldown: num('cooldown', 0, 0),
       priority: num('priority', 0),
       ...(during ? { during } : {}),

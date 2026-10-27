@@ -30,12 +30,12 @@ function scripted(...values: number[]): Rng {
 }
 
 function makeCtx(behavior: Behavior, over: Partial<BrainCtx> = {}): BrainCtx {
-  return { now: 0, dt: 1 / 60, rng: zero, manifest: pet, behavior, minX: 0, maxX: 1000, minY: 50, floorY: 600, walkSpeed: 60, hour: 12, cursor: null, ...over };
+  return { now: 0, dt: 1 / 60, rng: zero, manifest: pet, behavior, minX: 0, maxX: 1000, minY: 50, floorY: 600, petW: 64, petH: 64, walkSpeed: 60, hour: 12, cursor: null, surfaces: [], ...over };
 }
 
 function idleState(x = 500): BrainState {
   return {
-    body: { x, y: 600, facing: 1 }, mode: 'ground', vel: { x: 0, y: 0 }, thrown: false,
+    body: { x, y: 600, facing: 1 }, mode: 'ground', on: null, vel: { x: 0, y: 0 }, thrown: false, jumping: false,
     action: null, anim: 'loop', animStart: 0, cooldowns: {}, lastDone: {}, nextTick: Infinity,
   };
 }
@@ -128,7 +128,7 @@ describe('choosing what to do when idle', () => {
       b.addRule({ id: 'r', on: 'idle', action: 'a', if: 'spy' });
     });
     stepBrain({ ...idleState(), lastDone: { a: 5 } }, makeCtx(b2, { now: 42, hour: 23 }));
-    expect(seen).toMatchObject({ now: 42, hour: 23, action: null, lastDone: { a: 5 }, cursor: null });
+    expect(seen).toMatchObject({ now: 42, hour: 23, action: null, lastDone: { a: 5 }, cursor: null, onSurface: false });
   });
 });
 
@@ -360,6 +360,85 @@ describe('drag, drop and throw', () => {
 
   it('release does nothing unless held', () => {
     expect(release(idleState(), { x: 900, y: 0 }, ctx).state.mode).toBe('ground');
+  });
+});
+
+describe('surfaces', () => {
+  const shelf = { id: 1, left: 400, right: 600, top: 450 };
+  const b = behaviorWith((b) => {
+    b.addAction({ id: 'jump', role: 'ambient', motion: 'jump' });
+    b.addAction({ id: 'walk', role: 'move', motion: 'wander' });
+    b.addRule({ id: 'land', on: 'land', priority: 90, action: 'b' });
+  });
+  const onShelf = (x = 500): BrainState => ({ ...idleState(x), on: 1, body: { x, y: 450, facing: 1 } });
+
+  it('stands on its surface and moves with it when the page scrolls', () => {
+    const s = stepBrain(onShelf(), makeCtx(b, { surfaces: [{ ...shelf, top: 380 }] })).state;
+    expect(s.body.y).toBe(380);
+    expect(s.on).toBe(1);
+  });
+
+  it('falls when its surface disappears or scrolls up out of reach', () => {
+    const playing = play(onShelf(), 'a', makeCtx(b, { surfaces: [shelf] })).state;
+    for (const surfaces of [[], [{ ...shelf, top: 20 }]]) {
+      const r = stepBrain(playing, makeCtx(b, { surfaces }));
+      expect(r.state.mode).toBe('air');
+      expect(r.state.on).toBeNull();
+      expect(r.effects).toContainEqual({ type: 'action-end', action: 'a', interrupted: true });
+    }
+  });
+
+  it('goes back to the floor when its surface scrolls below the window', () => {
+    const s = stepBrain(onShelf(), makeCtx(b, { surfaces: [{ ...shelf, top: 900 }] })).state;
+    expect(s).toMatchObject({ on: null, mode: 'ground', body: { y: 600 } });
+  });
+
+  it('walks only along its surface', () => {
+    const p = play(onShelf(500), 'walk', makeCtx(b, { surfaces: [shelf], rng: scripted(0.99) }));
+    expect(p.state.action!.targetX).toBeLessThanOrEqual(600);
+    expect(p.state.action!.targetX).toBeGreaterThanOrEqual(400);
+  });
+
+  it('jumps onto a surface in reach, finishing the step on landing (no land rule)', () => {
+    const ctx = makeCtx(b, { surfaces: [shelf], rng: scripted(0.5) });
+    const p = play(idleState(500), 'jump', ctx);
+    expect(p.state.mode).toBe('air');
+    expect(p.state.jumping).toBe(true);
+    expect(p.state.vel.y).toBeLessThan(0);
+    const r = run(p.state, makeCtx(b, { surfaces: [shelf] }), 2000);
+    expect(r.state.on).toBe(1);
+    expect(r.state.body.y).toBe(450);
+    const land = r.effects.find((e) => e.type === 'event' && e.name === 'land');
+    expect(land).toMatchObject({ rule: null, payload: { jumped: true, surface: true } });
+    expect(r.effects).toContainEqual({ type: 'action-end', action: 'jump', interrupted: false });
+  });
+
+  it('jumps down to the floor from a surface', () => {
+    const ctx = makeCtx(b, { surfaces: [shelf], rng: scripted(0.9) });
+    const r = run(play(onShelf(), 'jump', ctx).state, makeCtx(b, { surfaces: [shelf] }), 3000);
+    expect(r.state.on).toBeNull();
+    expect(r.state.body.y).toBe(600);
+    expect(r.state.mode).toBe('ground');
+  });
+
+  it('a rule whose jump has nowhere to go is skipped', () => {
+    const b = behaviorWith((b) => {
+      b.addAction({ id: 'jump', role: 'ambient', motion: 'jump' });
+      b.addRule({ id: 'jumpy', on: 'idle', action: 'jump', chance: 0.5, scaleBy: 'jumpiness', priority: 5 });
+    });
+    expect(stepBrain(idleState(), makeCtx(b)).state.action?.id).not.toBe('jump');
+    // With a shelf in reach and jumpiness 0.2, chance is 0.5 × 0.2 × 2 = 0.2.
+    const withShelf = makeCtx(b, { surfaces: [shelf] });
+    expect(stepBrain(idleState(), { ...withShelf, rng: scripted(0.19, 0.5) }).state.action?.id).toBe('jump');
+    expect(stepBrain(idleState(), { ...withShelf, rng: scripted(0.21, 0.5) }).state.action?.id).not.toBe('jump');
+  });
+
+  it('a thrown pet lands on a surface it falls onto, and the land rule fires', () => {
+    const held = holdAt(grab(idleState(), makeCtx(b)).state, 500, 300, makeCtx(b));
+    const r1 = release(held, { x: 0, y: 0 }, makeCtx(b));
+    const r2 = run(r1.state, makeCtx(b, { surfaces: [shelf] }), 2000);
+    expect(r2.state.on).toBe(1);
+    expect(r2.effects.find((e) => e.type === 'event' && e.name === 'land')).toMatchObject({ rule: 'land', payload: { surface: true } });
   });
 });
 

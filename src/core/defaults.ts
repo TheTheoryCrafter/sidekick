@@ -24,6 +24,7 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
     ],
   },
   { id: 'hide', role: 'hide' },
+  { id: 'jump', role: 'jump', motion: 'jump' },
   { id: 'eat', role: 'tool-used' },
   { id: 'celebrate', role: 'success', duration: 2500 },
   { id: 'faint', role: 'error', duration: 4000 },
@@ -43,6 +44,7 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'sleep-at-night', on: 'idle', if: ['night', 'sleepy'], chance: 0.6, priority: 51, action: 'sleep' },
   { id: 'sleep-when-sleepy', on: 'idle', if: 'sleepy', chance: 0.3, priority: 50, action: 'sleep' },
   { id: 'zoomies', on: 'idle', chance: 0.06, cooldown: 90_000, priority: 40, action: 'zoomies' },
+  { id: 'jump', on: 'idle', chance: 0.5, scaleBy: 'jumpiness', cooldown: 6000, priority: 35, action: 'jump' },
   { id: 'hide', on: 'idle', chance: 0.05, cooldown: 120_000, priority: 30, action: 'hide' },
   { id: 'walk', on: 'idle', chance: 0.55, priority: 10, action: 'walk' },
   { id: 'sit', on: 'idle', chance: 1, priority: 0, action: 'sit' },
@@ -54,7 +56,7 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'click', on: 'click', priority: 80, cooldown: 300, action: 'startle' },
   { id: 'tap', on: 'tap', priority: 80, cooldown: 300, action: 'startle' },
   { id: 'hover', on: 'hover', priority: 20, chance: 0.7, cooldown: 10_000, notDuring: ['sleep'], action: 'shy' },
-  { id: 'near-approach', on: 'near', priority: 15, chance: 0.3, cooldown: 20_000, notDuring: ['sleep'], action: 'approach' },
+  { id: 'near-approach', on: 'near', priority: 15, chance: 0.3, scaleBy: 'clinginess', cooldown: 20_000, notDuring: ['sleep'], action: 'approach' },
   { id: 'near-notice', on: 'near', priority: 15, chance: 0.6, cooldown: 12_000, notDuring: ['sleep'], action: 'notice' },
 
   // Events from the host site.

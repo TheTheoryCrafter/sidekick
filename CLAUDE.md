@@ -28,7 +28,7 @@ Keep this list current. Add to it whenever a choice is made.
 - Optional manifest fields and their defaults: `col` (0), `loop` (true), `anchor`
   (bottom centre), `facing` (`"right"`), `hitbox` (the whole frame), `traits` (speed 1,
   jumpiness 0.2, clinginess 0.5), and `sheetSize` (only used to bounds-check animations).
-  `traits.clinginess` is not used yet; `jumpiness` will drive jumping in M4.
+  `traits.jumpiness` and `traits.clinginess` scale the chance of the jump and approach rules (`scaleBy`).
 - Behavior refers only to **roles**, never to animation names. `ROLE_FALLBACKS` in
   `src/core/roles.ts` defines the fallback chain for each role. Every chain ends in `ambient`
   and then the first animation, except roles in `ROLES_WITHOUT_DEFAULT` (`poopEntity`). A pet
@@ -105,6 +105,47 @@ Keep this list current. Add to it whenever a choice is made.
 - The role `tired` is new, with fallback → ambient. Sleep plays `tired`, then `sleep`, and
   the cream cat maps `tired` to `yawn`.
 - `setTimeScale(1–60)` is a debug aid that speeds up sim time, motion included.
+
+**Surfaces and jumping (M4)**
+- **Surfaces are one-way platforms.** A page element's top edge is a `Surface
+  { id, left, right, top }` in viewport px. `BrainState.on` holds the surface id, or null
+  for the floor. A falling pet lands on the highest top edge it crosses on the way down
+  (`landingSurface`), so drops and throws land on elements too.
+- **Riding scroll.** The surface underfoot is re-measured every step (`measureOne`), so the
+  pet moves with it exactly.
+  - If the surface disappears, the pet slides off its edge, or the edge goes above `minY`
+    (scrolled out the top), the pet falls and its action ends.
+  - If the edge scrolls below the window, the pet snaps back to the floor.
+- **Walking on a surface.** `wander`, `run` and `follow` stay within the surface's span.
+- **The `jump` motion** picks a reachable target (`findJumpTarget`).
+  - In reach means at most 4 pet heights up, 7 pet widths sideways, not the current
+    surface, and inset half a pet width from the edges. From a surface, the floor is
+    always an option.
+  - The jump is ballistic: the apex sits 0.6 pet heights above the higher end, and the
+    flight doesn't bounce.
+  - A jump landing finishes the jump step and does not run the `land` rules. It still
+    reports a `land` event with payload `{ impact, thrown, jumped, surface }`.
+- **Skipped rules.** A rule is skipped when its action's first motion can't happen right
+  now (`canStart`): `follow` without a cursor, or `jump` with nothing in reach.
+- **Trait-scaled chance.** `scaleBy: 'jumpiness' | 'clinginess'` makes a rule's chance
+  `chance × trait × 2`, capped at 1. The default free-time `jump` rule is chance 0.5 scaled
+  by jumpiness (0.2 for the cream cat), with a 6 s cooldown and priority 35. `near-approach`
+  is scaled by clinginess. `ConditionCtx` gains `onSurface`.
+- **Finding surfaces** (`src/dom/surfaces.ts`) is a two-speed scan.
+  - Discovery runs `querySelectorAll` every 2 s, keeping up to 400 elements and skipping
+    the host and anything inside `[data-sidekick-ignore]`.
+  - Measurement runs at most every 120 ms, only after a scroll or resize (both listened
+    for in the capture phase, so inner scroll boxes count).
+  - A surface is kept if its top is visible, its height is at least 4 px, it is wider than
+    the pet's hitbox, `checkVisibility` passes, its top edge is not covered (checked with
+    `elementFromPoint` at 25% and 75% of its width, so it isn't under a sticky header or
+    modal), and it isn't a duplicate of another edge.
+  - The default selector covers headings, `p`, media, form controls, `li`, landmarks,
+    `[role=button]` and `[data-sidekick-surface]`. Plain `div`s are not included, so cards
+    count only through their contents unless they opt in.
+- **The `surfaces` option** takes a selector string, or `false` to keep the pet on the floor.
+  `debugSurfaces()` is a demo aid.
+- **Measured:** the M4 demo runs with at most 6 ms frames while jumping constantly.
 
 **Interaction and physics (M3)**
 - **Body modes.** `BrainState.mode` is `ground`, `held` or `air`. No rule fires and `play`
@@ -193,7 +234,7 @@ Keep this list current. Add to it whenever a choice is made.
 - [x] M1 Shadow DOM host, renderer, loop, walk and idle along the floor
 - [x] M2 Behavior and rules engine, random idle actions, debug panel
 - [x] M3 Interaction: hover, near, click, double-click, tap, drag, drop and throw
-- [ ] M4 Surfaces: standing on and jumping between elements
+- [x] M4 Surfaces: standing on and jumping between elements
 - [ ] M5 Poop
 - [ ] M6 Host events, sensors, persistence, built-in menu
 - [ ] M7 Packaging (IIFE, ESM, React), SSR, CSP, size budget, reduced motion
