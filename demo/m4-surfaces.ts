@@ -1,7 +1,7 @@
 import { init } from '../src/index';
 
 const $ = (id: string) => document.getElementById(id)!;
-const pet = init({ scale: 2 })!;
+const pet = init({ scale: 2, persist: false })!;
 const lines = new Map<number, HTMLDivElement>();
 
 $('jump').onclick = () => pet.play('jump');

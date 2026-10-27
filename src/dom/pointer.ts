@@ -13,6 +13,8 @@ export interface PointerHandlers {
   release(vel: Vec): void;
   /** Mouse/pen position in the viewport, or null once it leaves the page. */
   cursor(pos: Vec | null): void;
+  /** Right-click or long-press on the pet. Without it, both do nothing. */
+  menu?(at: Vec): void;
 }
 
 export const GESTURE = {
@@ -23,6 +25,8 @@ export const GESTURE = {
   clickMs: 500,
   /** Two clicks closer than this make a double-click, ms. */
   doubleMs: 350,
+  /** Holding still this long opens the menu, ms. */
+  longPressMs: 550,
 } as const;
 
 interface Press { id: number; type: string; x: number; y: number; t: number }
@@ -32,6 +36,9 @@ export class PointerInput {
   private dragging = false;
   private samples: PointerSample[] = [];
   private lastClick = { t: -Infinity, type: '' };
+  private longPress = 0;
+  /** The current press opened the menu, so it is not a click or a drag. */
+  private pressOpenedMenu = false;
   private cleanups: (() => void)[] = [];
 
   constructor(private win: Window, private hit: HTMLElement, private h: PointerHandlers) {
@@ -43,7 +50,13 @@ export class PointerInput {
     this.on(hit, 'pointerup', (e) => this.up(e));
     this.on(hit, 'pointercancel', () => this.cancel());
     this.on(hit, 'lostpointercapture', () => this.cancel());
-    this.on(hit, 'contextmenu', (e) => e.preventDefault());
+    this.on(hit, 'contextmenu', (e) => {
+      e.preventDefault();
+      if (!h.menu || this.dragging) return;
+      this.cancelLongPress();
+      if (this.press) this.pressOpenedMenu = true;
+      h.menu({ x: e.clientX, y: e.clientY });
+    });
 
     // The page-wide listeners are passive: they watch the cursor and never block scrolling.
     this.on(win, 'pointermove', (e) => {
@@ -59,6 +72,7 @@ export class PointerInput {
   }
 
   destroy(): void {
+    this.cancelLongPress();
     this.cleanups.forEach((fn) => fn());
     this.cleanups = [];
   }
@@ -69,6 +83,16 @@ export class PointerInput {
     try { this.hit.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
     this.press = { id: e.pointerId, type: e.pointerType, x: e.clientX, y: e.clientY, t: e.timeStamp };
     this.samples = [{ t: e.timeStamp, x: e.clientX, y: e.clientY }];
+    this.pressOpenedMenu = false;
+    if (this.h.menu) {
+      const at = { x: e.clientX, y: e.clientY };
+      this.longPress = this.win.setTimeout(() => {
+        this.longPress = 0;
+        if (!this.press || this.dragging) return;
+        this.pressOpenedMenu = true;
+        this.h.menu?.(at);
+      }, GESTURE.longPressMs);
+    }
   }
 
   private move(e: PointerEvent): void {
@@ -79,6 +103,8 @@ export class PointerInput {
     if (!this.dragging) {
       const limit = p.type === 'touch' ? GESTURE.dragTouch : GESTURE.dragMouse;
       if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < limit) return;
+      this.cancelLongPress();
+      if (this.pressOpenedMenu) return;
       this.dragging = true;
       this.h.grab({ x: p.x, y: p.y });
     }
@@ -90,7 +116,7 @@ export class PointerInput {
     if (!p || e.pointerId !== p.id) return;
     if (this.dragging) {
       this.h.release(throwVelocity(this.samples, e.timeStamp));
-    } else if (e.timeStamp - p.t <= GESTURE.clickMs) {
+    } else if (!this.pressOpenedMenu && e.timeStamp - p.t <= GESTURE.clickMs) {
       const isDouble = e.timeStamp - this.lastClick.t <= GESTURE.doubleMs && this.lastClick.type === p.type;
       this.lastClick = isDouble ? { t: -Infinity, type: '' } : { t: e.timeStamp, type: p.type };
       this.h.click(isDouble ? 'dblclick' : p.type === 'touch' ? 'tap' : 'click');
@@ -104,7 +130,13 @@ export class PointerInput {
     this.reset();
   }
 
+  private cancelLongPress(): void {
+    if (this.longPress) this.win.clearTimeout(this.longPress);
+    this.longPress = 0;
+  }
+
   private reset(): void {
+    this.cancelLongPress();
     this.press = null;
     this.dragging = false;
     this.samples = [];

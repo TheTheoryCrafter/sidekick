@@ -4,7 +4,7 @@ const $ = (id: string) => document.getElementById(id)!;
 const scaleSel = $('scale') as HTMLSelectElement;
 let clicks = 0;
 
-const start = () => init({ scale: Number(scaleSel.value) });
+const start = () => init({ scale: Number(scaleSel.value), persist: false });
 start();
 
 scaleSel.onchange = () => getInstance()?.setScale(Number(scaleSel.value));

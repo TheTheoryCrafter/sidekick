@@ -1,0 +1,27 @@
+{
+  "id": "box-cat",
+  "name": "Box cat",
+  "sheet": "../../../pets/cream-cat/cream-cat-sheet-v2.png",
+  "frameSize": [32, 32],
+  "sheetSize": [512, 960],
+  "anchor": [16, 32],
+  "hitbox": [0, 1, 32, 31],
+  "animations": {
+    "box-peek": { "row": 9, "frames": 12, "fps": 8, "loop": false },
+    "box-idle": { "row": 10, "frames": 4, "fps": 6, "loop": true },
+    "box-idle-2": { "row": 11, "frames": 4, "fps": 6, "loop": true },
+    "walk": { "row": 25, "frames": 8, "fps": 7, "loop": true },
+    "held": { "row": 5, "frames": 12, "fps": 8, "loop": true },
+    "grumpy": { "row": 18, "frames": 4, "fps": 4, "loop": true },
+    "sleep": { "row": 2, "frames": 4, "fps": 3, "loop": true }
+  },
+  "roles": {
+    "ambient": ["box-idle", "box-idle-2"],
+    "move": "walk",
+    "hover": "box-peek",
+    "click": "grumpy",
+    "dragged": "held",
+    "sleep": "sleep"
+  },
+  "traits": { "speed": 0.6, "jumpiness": 0, "clinginess": 0.2 }
+}

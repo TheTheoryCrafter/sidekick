@@ -106,6 +106,60 @@ Keep this list current. Add to it whenever a choice is made.
   the cream cat maps `tired` to `yawn`.
 - `setTimeScale(1–60)` is a debug aid that speeds up sim time, motion included.
 
+**Host API, settings, sensors and menu (M6)**
+- **Lifecycle.** The instance owns its `<sidekick-pet>` host for its whole life. The pet
+  itself is mounted and unmounted (`Mounted`: sprite, input, loop, sensors, scanner,
+  poops). `disable()` unmounts, and the pet's poops go with it. `enable()` mounts again.
+  `setPet(id)` unmounts and mounts the new pet, keeping its x position.
+  - A `generation` counter makes a slow pet load that has gone stale give up.
+  - Loaded pets are cached per id; failed loads are not cached.
+  - New status `disabled`. Events emitted while disabled are dropped, not queued.
+- **API additions.** `enable`, `disable`, `toggle`, `isEnabled`, `setPet` (async),
+  `getSettings`, `getPets`, `subscribe(fn)` for on/off and pet changes (from the API, the
+  menu or another tab), and `clearPoops`.
+  - `on(fn)` remains the stream of what the pet does.
+  - New options: `pets`, `petUrls` (`{ id: folderUrl }` for pets kept outside
+    `petsBaseUrl`), `enabled`, `persist`, `storageKey`, `menu` and `idleAfter`.
+- **Settings in localStorage** (`src/core/settings.ts`, `src/dom/storage.ts`).
+  - Key `sidekick:v1` holds `{ v: 1, enabled, pet, x }`, where `x` is a share of the
+    window width.
+  - Parsing is defensive: anything malformed, from another version, or with a bad pet id is
+    ignored.
+  - The visitor's stored choice wins over the site's `enabled` and `pet` defaults, except a
+    stored pet that is no longer in `pets`.
+  - Settings are written on enable, disable and setPet, on `pagehide`, and when the tab is
+    hidden. Every access is in try/catch.
+  - **Cross-tab sync.** Another tab's `storage` event is applied without writing back, so
+    tabs never ping-pong.
+- **Built-in events** (`src/dom/sensors.ts`), checked at most every 250 ms from the loop:
+  - `visitor-idle`: no pointer, key, wheel, scroll or touch input for `idleAfter`
+    (default 60 s); fires once.
+  - `visitor-return`: the next input after `visitor-idle`.
+  - `page-change { from, to }`: the URL changed (polled, no history patching).
+  - `copy`.
+  - `tab-return { away }`: back after at least 30 s hidden.
+  - **Default reactions.**
+    - visitor-idle → sleep (45, 80%).
+    - visitor-return → `wake` (the `tired` role) while asleep (55), else notice (30, 50%).
+    - tab-return → happy (40).
+    - page-change → `look` (the `near` role; 30, 80%, 2 s).
+    - copy → eat (30, 5 s).
+- **Built-in menu** (`menu: true`, `src/dom/menu.ts`).
+  - It opens on right-click or a 550 ms long-press on the pet. A long-press that opens it
+    is neither a click nor a drag.
+  - Items: Take a nap / Wake up, Clean up (n) when there are poops, Switch to <pet> for
+    each other pet, and Hide pet.
+  - It closes on an outside pointerdown, Escape, scroll, resize or after a choice.
+  - When the pet is hidden, a small paw button in the bottom-right corner brings it back.
+  - Colors follow `prefers-color-scheme`, set through CSSOM like everything else.
+  - **Pointer-only by design.** The overlay is aria-hidden, so sites needing accessible
+    controls drive the API from their own UI.
+- **Demos and storage.** The M1–M5 demos pass `persist: false`, so a choice saved in the M6
+  demo can't hide the pet there. `demo/pets/box-cat` is a demo-only second pet: a
+  manifest-only variant that reuses the cream cat sheet with box animations as its idle
+  roles and has no poop or jump. It shows that a pet is just data and that missing roles
+  fall back.
+
 **Poop (M5)**
 - **The action.** It is `{ role: 'poop', emit: 'poop', interruptible: false }`. A grab still
   cancels it, and then nothing is dropped. The pile is dropped when the step's `poop` emit
@@ -269,7 +323,7 @@ Keep this list current. Add to it whenever a choice is made.
 - [x] M3 Interaction: hover, near, click, double-click, tap, drag, drop and throw
 - [x] M4 Surfaces: standing on and jumping between elements
 - [x] M5 Poop
-- [ ] M6 Host events, sensors, persistence, built-in menu
+- [x] M6 Host events, sensors, persistence, built-in menu
 - [ ] M7 Packaging (IIFE, ESM, React), SSR, CSP, size budget, reduced motion
 - [ ] M8 Integration guide for theorycrafter (React Router + shadcn profile menu, via Lovable)
 - [ ] M9 README
@@ -282,3 +336,5 @@ Keep this list current. Add to it whenever a choice is made.
 - Node 24 LTS was installed via winget (2026-10-28). The preview tool reads
   `C:\Users\User\.claude\launch.json`, and the `sidekick-dev` entry there starts Vite for
   this repo.
+- **Asset licence (settled 2026-10-28).** The user confirmed the cream cat sheet may be
+  redistributed, so it can ship inside the npm package and the CDN/script-tag build.

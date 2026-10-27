@@ -7,7 +7,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLEl
   return n;
 };
 
-const pet = init({ scale: 3 })!;
+const pet = init({ scale: 3, persist: false })!;
 const lines: string[] = [];
 let lastFired: string | null = null;
 

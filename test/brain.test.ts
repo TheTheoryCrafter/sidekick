@@ -482,6 +482,17 @@ describe('default behavior with the cream cat', () => {
     expect(r.effects).toContainEqual({ type: 'emit', name: 'poop', action: 'poop' });
   });
 
+  it('naps when the visitor goes quiet and wakes when they come back', () => {
+    const cat = validateManifest(creamCat).manifest!;
+    const ctx = makeCtx(defaultBehavior(), { manifest: cat });
+    const sitting = play(createBrain(500, ctx), 'sit', ctx).state;
+    const asleep = dispatch(sitting, 'visitor-idle', ctx).state;
+    expect(asleep.action?.id).toBe('sleep');
+    const woken = dispatch(asleep, 'visitor-return', ctx).state;
+    expect(woken.action?.id).toBe('wake');
+    expect(woken.anim).toBe('yawn');
+  });
+
   it('wakes up for a host event', () => {
     const cat = validateManifest(creamCat).manifest!;
     const ctx = makeCtx(defaultBehavior(), { manifest: cat });

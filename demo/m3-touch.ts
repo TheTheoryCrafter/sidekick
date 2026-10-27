@@ -1,7 +1,7 @@
 import { init, type SidekickEvent } from '../src/index';
 
 const $ = (id: string) => document.getElementById(id)!;
-const pet = init({ scale: 2 })!;
+const pet = init({ scale: 2, persist: false })!;
 const lines: string[] = [];
 let clicks = 0;
 

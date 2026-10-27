@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekick · M6 host API</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: #f6f3ee; color: #222; }
+    header { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 10px 16px; background: #1f2937; color: #fff; }
+    header b { margin-right: 8px; }
+    header a { color: #9ecbff; }
+    header select, header button { font: inherit; }
+    .switch { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+    main { max-width: 1000px; margin: 0 auto; padding: 16px 16px 200px; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    @media (max-width: 820px) { main { grid-template-columns: minmax(0, 1fr); } }
+    section { background: #fff; border: 1px solid #e3ddd3; border-radius: 8px; padding: 12px; min-width: 0; }
+    h2 { font-size: 14px; margin: 0 0 8px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    button { font: inherit; padding: 3px 9px; cursor: pointer; }
+    pre { font: 12px ui-monospace, monospace; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #log { height: 260px; overflow: auto; }
+    .wide { grid-column: 1 / -1; }
+    .copyme { background: #fff8d6; padding: 6px 8px; border-radius: 6px; }
+    .hint { color: #777; font-size: 12px; margin: 4px 0 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <b>M6 · A host site</b>
+    <label class="switch"><input type="checkbox" id="enabled" /> Pet</label>
+    <label>Pet <select id="pet"></select></label>
+    <span id="route">route: /</span>
+    <a href="./m6-host.html" target="_blank">open a second tab</a>
+    <a href="./index.html">All demos</a>
+  </header>
+  <main>
+    <section>
+      <h2>Site events → emit()</h2>
+      <div class="btns">
+        <button data-emit="tool-completed">tool-completed</button>
+        <button data-emit="success">success</button>
+        <button data-emit="error">error</button>
+      </div>
+      <h2>Fake route change (history.pushState)</h2>
+      <div class="btns">
+        <button data-route="/theories">/theories</button>
+        <button data-route="/crafts">/crafts</button>
+        <button data-route="/about">/about</button>
+      </div>
+      <h2>Copy</h2>
+      <p class="copyme">Select and copy this sentence (Ctrl+C): the cat eats it.</p>
+      <h2>Built-in menu</h2>
+      <p class="hint">Right-click the cat (or long-press on touch). Choose "Hide pet": a paw appears bottom-right to bring it back. The checkbox in the dark header follows along.</p>
+    </section>
+    <section>
+      <h2>Saved in localStorage ("sidekick:v1")</h2>
+      <pre id="stored"></pre>
+      <div class="btns" style="margin-top:8px"><button id="reset">forget saved settings + reload</button></div>
+      <h2>subscribe() sees</h2>
+      <pre id="settings"></pre>
+      <p class="hint">Idle threshold here is 10 s: stop moving the mouse and the cat naps; move again and it wakes. Switch to another tab for 30 s and come back: it's happy to see you.</p>
+    </section>
+    <section class="wide">
+      <h2>Events <button id="clear">clear</button></h2>
+      <pre id="log"></pre>
+    </section>
+  </main>
+  <script type="module" src="./m6-host.ts"></script>
+</body>
+</html>

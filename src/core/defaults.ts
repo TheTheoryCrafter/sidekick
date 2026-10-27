@@ -39,6 +39,10 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
   { id: 'approach', steps: [{ role: 'move', motion: 'follow' }, { role: 'near', face: 'cursor' }] },
   { id: 'land', role: 'landing' },
   { id: 'grumble', steps: [{ role: 'landing' }, { role: 'thrown', duration: 2000 }] },
+
+  // Reactions to the page.
+  { id: 'wake', role: 'tired' },
+  { id: 'look', role: 'near' },
 ];
 
 export const DEFAULT_RULES: RuleInput[] = [
@@ -63,6 +67,14 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'hover', on: 'hover', priority: 20, chance: 0.7, cooldown: 10_000, notDuring: ['sleep'], action: 'shy' },
   { id: 'near-approach', on: 'near', priority: 15, chance: 0.3, scaleBy: 'clinginess', cooldown: 20_000, notDuring: ['sleep'], action: 'approach' },
   { id: 'near-notice', on: 'near', priority: 15, chance: 0.6, cooldown: 12_000, notDuring: ['sleep'], action: 'notice' },
+
+  // Built-in page events.
+  { id: 'visitor-idle', on: 'visitor-idle', priority: 45, chance: 0.8, notDuring: ['sleep'], action: 'sleep' },
+  { id: 'visitor-return-wake', on: 'visitor-return', priority: 55, during: ['sleep'], action: 'wake' },
+  { id: 'visitor-return', on: 'visitor-return', priority: 30, chance: 0.5, action: 'notice' },
+  { id: 'tab-return', on: 'tab-return', priority: 40, chance: 0.8, action: 'happy' },
+  { id: 'page-change', on: 'page-change', priority: 30, chance: 0.8, cooldown: 2000, notDuring: ['sleep'], action: 'look' },
+  { id: 'copy', on: 'copy', priority: 30, cooldown: 5000, notDuring: ['sleep'], action: 'eat' },
 
   // Events from the host site.
   { id: 'tool-completed', on: 'tool-completed', priority: 60, cooldown: 3000, action: 'eat' },

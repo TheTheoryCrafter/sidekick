@@ -2,7 +2,7 @@ import { init } from '../src/index';
 
 const $ = (id: string) => document.getElementById(id)!;
 const ttl = Number(new URLSearchParams(location.search).get('ttl')) || undefined;
-const pet = init({ scale: 2, poop: { ttl } })!;
+const pet = init({ scale: 2, poop: { ttl }, persist: false })!;
 const lines: string[] = [];
 
 const log = (msg: string) => {
