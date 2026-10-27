@@ -104,7 +104,7 @@ describe('defaults', () => {
   });
 
   it('sleepy and night conditions', () => {
-    const ctx = { now: SLEEPY_AFTER_MS, hour: 12, action: null, lastDone: {}, payload: undefined };
+    const ctx = { now: SLEEPY_AFTER_MS, hour: 12, action: null, lastDone: {}, payload: undefined, cursor: null };
     expect(DEFAULT_CONDITIONS.sleepy!(ctx)).toBe(true);
     expect(DEFAULT_CONDITIONS.sleepy!({ ...ctx, lastDone: { sleep: 1000 } })).toBe(false);
     expect(DEFAULT_CONDITIONS.night!(ctx)).toBe(false);

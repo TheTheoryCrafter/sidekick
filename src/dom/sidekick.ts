@@ -1,12 +1,17 @@
 // The Sidekick instance: loads a pet, owns the host, the loop and the brain.
 
 import { Behavior, type ActionInput, type ConditionFn, type RuleDef, type RuleInput } from '../core/behavior';
-import { createBrain, dispatch, play, stepBrain, type BrainCtx, type BrainEffect, type BrainResult, type BrainState } from '../core/brain';
+import {
+  createBrain, dispatch, grab, holdAt, play, release, stepBrain,
+  type BrainCtx, type BrainEffect, type BrainResult, type BrainState,
+} from '../core/brain';
+import type { Vec } from '../core/physics';
 import { defaultBehavior } from '../core/defaults';
 import { validateManifest, type PetManifest } from '../core/manifest';
 import { seededRng, type Rng } from '../core/rng';
 import { createHost, type Host } from './host';
 import { Loop } from './loop';
+import { PointerInput } from './pointer';
 import { SpriteView, type SheetInfo } from './sprite-view';
 
 export interface SidekickOptions {
@@ -40,6 +45,9 @@ export interface SidekickDebug {
   x?: number;
   y?: number;
   facing?: 1 | -1;
+  /** On the ground, held by the pointer, or flying. */
+  mode?: 'ground' | 'held' | 'air';
+  cursorNear?: boolean;
   /** ms until each cooling-down rule may fire again. */
   cooldowns?: Record<string, number>;
   lastDone?: Record<string, number>;
@@ -49,6 +57,10 @@ export interface SidekickDebug {
 
 /** Base walk speed in sheet pixels per second. */
 const WALK_SHEET_PX_PER_S = 30;
+/** "near" fires when the cursor comes within this many frame widths of the pet's middle. */
+const NEAR_FRAMES = 2.5;
+/** ...and re-arms once it is this much further away again. */
+const NEAR_HYSTERESIS = 1.4;
 /** Events emitted before the pet has loaded are kept, up to this many. */
 const MAX_PENDING_EVENTS = 10;
 
@@ -77,6 +89,11 @@ export class Sidekick {
   private cleanups: (() => void)[] = [];
   private listeners = new Set<(e: SidekickEvent) => void>();
   private pending: [string, unknown][] = [];
+  private input: PointerInput | null = null;
+  private cursor: Vec | null = null;
+  private cursorNear = false;
+  /** Feet minus pointer at the start of a drag, so the pet doesn't jump to the pointer. */
+  private grabOffset: Vec = { x: 0, y: 0 };
 
   constructor(private win: Window, options: SidekickOptions = {}) {
     this.opts = {
@@ -165,6 +182,8 @@ export class Sidekick {
             x: Math.round(s.body.x),
             y: Math.round(s.body.y),
             facing: s.body.facing,
+            mode: s.mode,
+            cursorNear: this.cursorNear,
             cooldowns: Object.fromEntries(
               Object.entries(s.cooldowns).filter(([, t]) => t > now).map(([k, t]) => [k, Math.round(t - now)]),
             ),
@@ -177,6 +196,8 @@ export class Sidekick {
   destroy(): void {
     this.status = 'destroyed';
     this.loop?.stop();
+    this.input?.destroy();
+    this.input = null;
     this.cleanups.forEach((fn) => fn());
     this.cleanups = [];
     this.listeners.clear();
@@ -197,6 +218,22 @@ export class Sidekick {
       this.manifest = manifest;
       this.host = createHost(doc);
       this.view = new SpriteView(doc, this.host.stage, manifest, sheet);
+      this.input = new PointerInput(this.win, this.view.hit, {
+        hover: () => this.emit('hover'),
+        click: (kind) => this.emit(kind),
+        cursor: (pos) => { this.cursor = pos; },
+        grab: (at) => {
+          if (!this.state) return;
+          this.grabOffset = { x: this.state.body.x - at.x, y: this.state.body.y - at.y };
+          this.apply(grab(this.state, this.ctx(0)));
+        },
+        drag: (to) => {
+          if (this.state) this.state = holdAt(this.state, to.x + this.grabOffset.x, to.y + this.grabOffset.y, this.ctx(0));
+        },
+        release: (vel) => {
+          if (this.state) this.apply(release(this.state, vel, this.ctx(0)));
+        },
+      });
       const c = this.ctx(0);
       this.state = createBrain(c.minX + this.rng() * (c.maxX - c.minX), c);
       this.loop = new Loop(this.win, (dt) => this.step(dt), () => this.render());
@@ -253,10 +290,12 @@ export class Sidekick {
       manifest: m,
       behavior: this.behavior,
       minX: margin,
+      minY: m.anchor[1] * px,
       maxX: de.clientWidth - margin,
       floorY: de.clientHeight,
       walkSpeed: WALK_SHEET_PX_PER_S * px * m.traits.speed,
       hour: new Date().getHours(),
+      cursor: this.cursor,
     };
   }
 
@@ -265,6 +304,27 @@ export class Sidekick {
     const dt = dtMs * this.timeScale;
     this.simTime += dt;
     this.apply(stepBrain(this.state, this.ctx(dt)));
+    this.checkNear();
+  }
+
+  /** Emit "near" when the cursor comes close, once per approach. */
+  private checkNear(): void {
+    const s = this.state;
+    if (!s || !this.manifest) return;
+    if (!this.cursor || s.mode !== 'ground') {
+      this.cursorNear = false;
+      return;
+    }
+    const px = this.pixelSize();
+    const [fw, fh] = this.manifest.frameSize;
+    const d = Math.hypot(this.cursor.x - s.body.x, this.cursor.y - (s.body.y - (fh * px) / 2));
+    const r = fw * px * NEAR_FRAMES;
+    if (!this.cursorNear && d < r) {
+      this.cursorNear = true;
+      this.emit('near');
+    } else if (this.cursorNear && d > r * NEAR_HYSTERESIS) {
+      this.cursorNear = false;
+    }
   }
 
   private apply(r: BrainResult): void {
@@ -296,6 +356,7 @@ export class Sidekick {
       facing: s.body.facing,
       scale: this.opts.scale,
       dpr: this.win.devicePixelRatio || 1,
+      cursor: this.input?.isDragging ? 'grabbing' : 'grab',
     });
   }
 

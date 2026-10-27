@@ -1,5 +1,6 @@
-// Draws one sprite frame as a div with a background image. Writes styles only
-// when something changed, and snaps everything to whole device pixels.
+// Draws one sprite frame as a div with a background image, plus an invisible
+// hitbox over the pet that takes the pointer. Writes styles only when something
+// changed, and snaps everything to whole device pixels.
 
 import type { PetManifest } from '../core/manifest';
 import { frameAt, frameRect } from '../core/sprite';
@@ -16,11 +17,15 @@ export interface DrawArgs {
   facing: 1 | -1;
   scale: number;
   dpr: number;
+  /** Cursor over the hitbox: "grab", or "grabbing" while dragging. */
+  cursor: 'grab' | 'grabbing';
 }
 
 export class SpriteView {
   readonly el: HTMLDivElement;
-  private last = { frameKey: '', transform: '', size: '' };
+  /** Transparent element over the pet that receives pointer events. */
+  readonly hit: HTMLDivElement;
+  private last = { frameKey: '', transform: '', size: '', hit: '', cursor: '' };
 
   constructor(doc: Document, parent: HTMLElement, private manifest: PetManifest, private sheet: SheetInfo) {
     this.el = doc.createElement('div');
@@ -33,7 +38,20 @@ export class SpriteView {
     s.imageRendering = 'pixelated';
     s.pointerEvents = 'none';
     s.willChange = 'transform';
-    parent.append(this.el);
+
+    this.hit = doc.createElement('div');
+    const h = this.hit.style;
+    h.position = 'absolute';
+    h.left = '0';
+    h.top = '0';
+    h.pointerEvents = 'auto';
+    // The pet handles its own drags; page scrolling elsewhere is untouched.
+    h.touchAction = 'none';
+    h.userSelect = 'none';
+    h.setProperty('-webkit-user-select', 'none');
+    h.setProperty('-webkit-touch-callout', 'none');
+    h.setProperty('-webkit-tap-highlight-color', 'transparent');
+    parent.append(this.el, this.hit);
   }
 
   /** Size of one sheet pixel in CSS px: a whole number of device pixels. */
@@ -76,9 +94,25 @@ export class SpriteView {
       s.transform = transform;
       this.last.transform = transform;
     }
+
+    const [hx, hy, hw, hh] = this.manifest.hitbox;
+    const hitX = left + (mirrored ? fw - hx - hw : hx) * px;
+    const hitKey = `${hitX},${top + hy * px},${hw * px},${hh * px}`;
+    if (hitKey !== this.last.hit) {
+      const h = this.hit.style;
+      h.width = `${hw * px}px`;
+      h.height = `${hh * px}px`;
+      h.transform = `translate3d(${hitX}px,${top + hy * px}px,0)`;
+      this.last.hit = hitKey;
+    }
+    if (a.cursor !== this.last.cursor) {
+      this.hit.style.cursor = a.cursor;
+      this.last.cursor = a.cursor;
+    }
   }
 
   remove(): void {
     this.el.remove();
+    this.hit.remove();
   }
 }

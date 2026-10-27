@@ -23,6 +23,7 @@ describe('validateManifest', () => {
     expect(m.name).toBe('test-pet');
     expect(m.anchor).toEqual([16, 32]);
     expect(m.facing).toBe('right');
+    expect(m.hitbox).toEqual([0, 0, 32, 32]);
     expect(m.traits).toEqual({ speed: 1, jumpiness: 0.2, clinginess: 0.5 });
     expect(m.roles).toEqual({});
     expect(m.animations.sit!.col).toBe(0);
@@ -64,6 +65,13 @@ describe('validateManifest', () => {
     expect(r.manifest!.roles).toEqual({ ambient: ['sit'] });
     expect(r.warnings.some((w) => w.includes('"ghost"'))).toBe(true);
     expect(r.warnings.some((w) => w.includes('Role "sleep" dropped'))).toBe(true);
+  });
+
+  it('accepts a hitbox inside the frame and rejects one outside it', () => {
+    expect(validateManifest({ ...minimal, hitbox: [2, 4, 28, 28] }).manifest!.hitbox).toEqual([2, 4, 28, 28]);
+    const r = validateManifest({ ...minimal, hitbox: [10, 0, 30, 32] });
+    expect(r.manifest!.hitbox).toEqual([0, 0, 32, 32]);
+    expect(r.warnings[0]).toMatch(/hitbox/);
   });
 
   it('clamps traits and ignores invalid facing', () => {

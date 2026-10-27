@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Behavior } from '../src/core/behavior';
 import {
-  BRAIN, FALLBACK_ACTION, createBrain, dispatch, pickTarget, play, stepBrain,
+  BRAIN, FALLBACK_ACTION, createBrain, dispatch, grab, holdAt, pickTarget, play, release, stepBrain,
   type BrainCtx, type BrainEffect, type BrainState,
 } from '../src/core/brain';
 import { defaultBehavior } from '../src/core/defaults';
@@ -30,11 +30,14 @@ function scripted(...values: number[]): Rng {
 }
 
 function makeCtx(behavior: Behavior, over: Partial<BrainCtx> = {}): BrainCtx {
-  return { now: 0, dt: 1 / 60, rng: zero, manifest: pet, behavior, minX: 0, maxX: 1000, floorY: 600, walkSpeed: 60, hour: 12, ...over };
+  return { now: 0, dt: 1 / 60, rng: zero, manifest: pet, behavior, minX: 0, maxX: 1000, minY: 50, floorY: 600, walkSpeed: 60, hour: 12, cursor: null, ...over };
 }
 
 function idleState(x = 500): BrainState {
-  return { body: { x, y: 600, facing: 1 }, action: null, anim: 'loop', animStart: 0, cooldowns: {}, lastDone: {}, nextTick: Infinity };
+  return {
+    body: { x, y: 600, facing: 1 }, mode: 'ground', vel: { x: 0, y: 0 }, thrown: false,
+    action: null, anim: 'loop', animStart: 0, cooldowns: {}, lastDone: {}, nextTick: Infinity,
+  };
 }
 
 /** Run the brain for `ms` of sim time from ctx.now, collecting effects. */
@@ -125,7 +128,7 @@ describe('choosing what to do when idle', () => {
       b.addRule({ id: 'r', on: 'idle', action: 'a', if: 'spy' });
     });
     stepBrain({ ...idleState(), lastDone: { a: 5 } }, makeCtx(b2, { now: 42, hour: 23 }));
-    expect(seen).toMatchObject({ now: 42, hour: 23, action: null, lastDone: { a: 5 } });
+    expect(seen).toMatchObject({ now: 42, hour: 23, action: null, lastDone: { a: 5 }, cursor: null });
   });
 });
 
@@ -263,6 +266,100 @@ describe('running actions', () => {
     const r = play(idleState(), 'nope', makeCtx(new Behavior()));
     expect(r.state.action).toBeNull();
     expect(r.effects).toEqual([]);
+  });
+});
+
+describe('cursor', () => {
+  it('face: cursor and away turn the pet at step start', () => {
+    const b = behaviorWith((b) => {
+      b.addAction({ id: 'look', role: 'ambient', face: 'cursor' });
+      b.addAction({ id: 'snub', role: 'ambient', face: 'away' });
+    });
+    const left = { x: 100, y: 500 };
+    expect(play(idleState(500), 'look', makeCtx(b, { cursor: left })).state.body.facing).toBe(-1);
+    expect(play(idleState(500), 'snub', makeCtx(b, { cursor: left })).state.body.facing).toBe(1);
+    expect(play(idleState(500), 'look', makeCtx(b)).state.body.facing).toBe(1); // no cursor: unchanged
+  });
+
+  it('follow walks up beside a moving cursor and stops', () => {
+    const b = behaviorWith((b) => b.addAction({ id: 'come', role: 'move', motion: 'follow' }));
+    const p = play(idleState(100), 'come', makeCtx(b, { cursor: { x: 400, y: 500 } }));
+    expect(p.state.action!.targetX).toBe(400 - BRAIN.followStopPx);
+    // The cursor moves further right while it walks.
+    const r = run(p.state, makeCtx(b, { cursor: { x: 600, y: 500 } }), 20_000);
+    expect(r.state.body.x).toBeCloseTo(600 - BRAIN.followStopPx, 5);
+    expect(r.state.action?.id).not.toBe('come');
+  });
+
+  it('follow is skipped without a cursor', () => {
+    const b = behaviorWith((b) => b.addAction({ id: 'come', role: 'move', motion: 'follow' }));
+    expect(play(idleState(100), 'come', makeCtx(b)).state.action!.deadline).toBe(0);
+  });
+});
+
+describe('drag, drop and throw', () => {
+  const b = behaviorWith((b) => {
+    b.addAction({ id: 'landed', role: 'ambient', duration: 500 });
+    b.addAction({ id: 'cross', role: 'ambient', duration: 500 });
+    b.addCondition('thrown', (c) => !!(c.payload as { thrown: boolean }).thrown);
+    b.addRule({ id: 'land-thrown', on: 'land', if: 'thrown', priority: 2, action: 'cross' });
+    b.addRule({ id: 'land', on: 'land', priority: 1, action: 'landed' });
+    b.addRule({ id: 'busy', on: 'error', priority: 99, action: 'a' });
+  });
+  const ctx = makeCtx(b);
+
+  it('grab stops the running action and plays "dragged"', () => {
+    const playing = play(idleState(), 'a', ctx).state;
+    const r = grab(playing, ctx);
+    expect(r.state.mode).toBe('held');
+    expect(r.state.action).toBeNull();
+    expect(r.effects).toEqual([
+      { type: 'action-end', action: 'a', interrupted: true },
+      { type: 'event', name: 'drag-start', rule: null },
+    ]);
+  });
+
+  it('a held pet follows holdAt within bounds, turns with the drag, and ignores rules and time', () => {
+    let s = grab(idleState(500), ctx).state;
+    s = holdAt(s, 300, 200, ctx);
+    expect(s.body).toEqual({ x: 300, y: 200, facing: -1 });
+    s = holdAt(s, 5000, -100, ctx);
+    expect(s.body).toMatchObject({ x: 1000, y: 50, facing: 1 });
+    expect(dispatch(s, 'error', ctx).state.action).toBeNull();
+    expect(run(s, ctx, 2000).state.body).toEqual(s.body);
+  });
+
+  it('a gentle release is a drop: falls, lands, fires "land"', () => {
+    const held = holdAt(grab(idleState(), ctx).state, 500, 560, ctx);
+    const r1 = release(held, { x: 0, y: 0 }, ctx);
+    expect(r1.state.mode).toBe('air');
+    expect(r1.effects[0]).toMatchObject({ type: 'event', name: 'drop' });
+    const r2 = run(r1.state, ctx, 1000);
+    expect(r2.state.mode).toBe('ground');
+    expect(r2.state.body.y).toBe(600);
+    const land = r2.effects.find((e) => e.type === 'event' && e.name === 'land');
+    expect(land).toMatchObject({ rule: 'land', payload: { thrown: false } });
+  });
+
+  it('a fast release is a throw, and the landing knows it', () => {
+    const held = holdAt(grab(idleState(), ctx).state, 500, 300, ctx);
+    const r1 = release(held, { x: 1500, y: -800 }, ctx);
+    expect(r1.effects[0]).toMatchObject({ type: 'event', name: 'throw', payload: { vx: 1500, vy: -800 } });
+    expect(r1.state.thrown).toBe(true);
+    const r2 = run(r1.state, ctx, 5000);
+    expect(r2.state.mode).toBe('ground');
+    expect(r2.effects.find((e) => e.type === 'event' && e.name === 'land')).toMatchObject({ rule: 'land-thrown' });
+    expect(r2.state.body.x).toBeGreaterThanOrEqual(0);
+    expect(r2.state.body.x).toBeLessThanOrEqual(1000);
+  });
+
+  it('play is ignored while held or flying', () => {
+    const held = grab(idleState(), ctx).state;
+    expect(play(held, 'a', ctx).state.action).toBeNull();
+  });
+
+  it('release does nothing unless held', () => {
+    expect(release(idleState(), { x: 900, y: 0 }, ctx).state.mode).toBe('ground');
   });
 });
 

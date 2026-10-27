@@ -9,9 +9,10 @@ export type Range = number | readonly [number, number];
  * - none: stay put
  * - wander: walk to a random spot nearby
  * - run: dash to a spot far away
+ * - follow: walk up to the cursor (skipped when there is no cursor)
  */
-export type Motion = 'none' | 'wander' | 'run';
-export const MOTIONS: readonly Motion[] = ['none', 'wander', 'run'];
+export type Motion = 'none' | 'wander' | 'run' | 'follow';
+export const MOTIONS: readonly Motion[] = ['none', 'wander', 'run', 'follow'];
 
 export interface ActionStep {
   /** Role to animate (never an animation name). */
@@ -22,8 +23,10 @@ export interface ActionStep {
    * animation ends when it finishes, and a looping one plays for DEFAULT_STEP_MS.
    */
   duration?: Range;
-  /** Speed multiplier for the motion. Default 1 for wander, 3 for run. */
+  /** Speed multiplier for the motion. Default 1 for wander and follow, 3 for run. */
   speed?: number;
+  /** Turn toward or away from the cursor when the step starts. */
+  face?: 'cursor' | 'away';
   /** Name sent to listeners when this step ends (e.g. "poop" to drop a poop). */
   emit?: string;
 }
@@ -92,6 +95,8 @@ export interface ConditionCtx {
   lastDone: Readonly<Record<string, number>>;
   /** Payload of the event being handled, if any. */
   payload: unknown;
+  /** Cursor position in viewport px, or null when unknown (touch, cursor left the page). */
+  cursor: { x: number; y: number } | null;
 }
 
 export type ConditionFn = (ctx: ConditionCtx) => boolean;
@@ -125,6 +130,8 @@ function normalizeStep(raw: unknown, where: string, warn: (m: string) => void): 
     else warn(`${where}: "duration" must be ms or [min, max]; ignoring it.`);
   }
   if (typeof raw.speed === 'number' && raw.speed > 0) step.speed = raw.speed;
+  if (raw.face === 'cursor' || raw.face === 'away') step.face = raw.face;
+  else if (raw.face !== undefined) warn(`${where}: "face" must be "cursor" or "away"; ignoring it.`);
   if (typeof raw.emit === 'string' && raw.emit) step.emit = raw.emit;
   return step;
 }

@@ -26,8 +26,9 @@ Keep this list current. Add to it whenever a choice is made.
 - A manifest is validated by `validateManifest`. It never throws. Bad animations or roles are
   dropped with a warning, and only a manifest with no usable animation is rejected.
 - Optional manifest fields and their defaults: `col` (0), `loop` (true), `anchor`
-  (bottom centre), `facing` (`"right"`), `traits` (speed 1, jumpiness 0.2, clinginess 0.5),
-  and `sheetSize` (only used to bounds-check animations).
+  (bottom centre), `facing` (`"right"`), `hitbox` (the whole frame), `traits` (speed 1,
+  jumpiness 0.2, clinginess 0.5), and `sheetSize` (only used to bounds-check animations).
+  `traits.clinginess` is not used yet; `jumpiness` will drive jumping in M4.
 - Behavior refers only to **roles**, never to animation names. `ROLE_FALLBACKS` in
   `src/core/roles.ts` defines the fallback chain for each role. Every chain ends in `ambient`
   and then the first animation, except roles in `ROLES_WITHOUT_DEFAULT` (`poopEntity`). A pet
@@ -104,6 +105,47 @@ Keep this list current. Add to it whenever a choice is made.
 - The role `tired` is new, with fallback → ambient. Sleep plays `tired`, then `sleep`, and
   the cream cat maps `tired` to `yawn`.
 - `setTimeScale(1–60)` is a debug aid that speeds up sim time, motion included.
+
+**Interaction and physics (M3)**
+- **Body modes.** `BrainState.mode` is `ground`, `held` or `air`. No rule fires and `play`
+  is ignored unless the pet is on the ground. While held, time stands still for the brain.
+  A grab ends the running action (reported as interrupted) and plays role `dragged`.
+  A release plays `fall`.
+- **Physics** (`src/core/physics.ts`) works in CSS px and seconds:
+  - Gravity is 2600 px/s².
+  - Walls and the ceiling keep 45% of the speed. The floor bounces at 30% until the impact
+    is under 700 px/s, then the pet lands.
+  - Throws are measured over the last 90 ms of pointer samples and capped at 2600 px/s.
+  - A release faster than 500 px/s is a throw.
+  - Landing fires the `land` event with `{ impact, thrown }`.
+- **Visitor events.** Built-in events are `hover` (mouse or pen enters the hitbox),
+  `near`, `click`, `dblclick`, `tap` (touch), `drag-start`, `drop`/`throw` (both
+  notifications only, since the pet is in the air) and `land`.
+  - `near` fires when the cursor comes within 2.5 frame widths of the pet's middle, and
+    re-arms beyond 1.4 times that distance.
+  - A double-click delivers `click` first, then `dblclick`, which interrupts it (85 > 80).
+- **Default reactions.**
+  - Landing: `land-after-throw` → grumble (landing, then the `thrown` role) at 95, and
+    `land` → land at 90.
+  - Clicks: `dblclick` → happy at 85, and `click`/`tap` → startle at 80.
+  - Hover: `hover` → shy at 20 (70%, 10 s cooldown, not while asleep).
+  - Near: `near` → approach (follow the cursor; 30%, 20 s) or notice (face the cursor;
+    60%, 12 s).
+- **New step options.** Steps take `face: 'cursor' | 'away'`. Motion `follow` walks to
+  40 px beside the cursor and re-targets every step while the cursor moves. Without a
+  cursor the step is skipped.
+- **New roles.** `thrown` falls back to click. `dblclick` now falls back to success before
+  click. The cream cat maps `near` → `curious` and `thrown` → `angry`.
+- **Hitbox.** The optional manifest field `hitbox: [x, y, w, h]` (sheet px; default the
+  whole frame) is the only element that takes the pointer. It is mirrored with the sprite
+  and has `touch-action: none`, so touch drags on the pet don't scroll while the rest of
+  the page scrolls normally. The cream cat uses `[2, 4, 28, 28]`; its art spans the full
+  frame width but the top rows are empty.
+- **Pointer handling** (`src/dom/pointer.ts`) uses Pointer Events with
+  `setPointerCapture`. A drag starts after moving 5 px (mouse) or 10 px (touch). A click
+  is a press of at most 500 ms, and a double-click is two within 350 ms. The page-wide
+  `pointermove` and `mouseout` listeners are passive. While held, the pet keeps its grab
+  offset so it doesn't jump to the pointer.
 - Simulation time (`simTime`) advances only in fixed 1/60 s steps while the loop runs.
   Animation timing uses sim time, so pausing never skips frames. Frame gaps over 250 ms
   are capped, not fast-forwarded.
@@ -150,7 +192,7 @@ Keep this list current. Add to it whenever a choice is made.
 - [x] M0 Scaffold, manifest validator, role resolver, sprite viewer
 - [x] M1 Shadow DOM host, renderer, loop, walk and idle along the floor
 - [x] M2 Behavior and rules engine, random idle actions, debug panel
-- [ ] M3 Interaction: hover, near, click, double-click, tap, drag, drop and throw
+- [x] M3 Interaction: hover, near, click, double-click, tap, drag, drop and throw
 - [ ] M4 Surfaces: standing on and jumping between elements
 - [ ] M5 Poop
 - [ ] M6 Host events, sensors, persistence, built-in menu

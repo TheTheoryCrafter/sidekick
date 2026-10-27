@@ -27,6 +27,15 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
   { id: 'eat', role: 'tool-used' },
   { id: 'celebrate', role: 'success', duration: 2500 },
   { id: 'faint', role: 'error', duration: 4000 },
+
+  // Reactions to the visitor.
+  { id: 'startle', role: 'click', duration: 1000 },
+  { id: 'happy', role: 'dblclick', duration: 2000 },
+  { id: 'shy', role: 'hover' },
+  { id: 'notice', role: 'near', face: 'cursor' },
+  { id: 'approach', steps: [{ role: 'move', motion: 'follow' }, { role: 'near', face: 'cursor' }] },
+  { id: 'land', role: 'landing' },
+  { id: 'grumble', steps: [{ role: 'landing' }, { role: 'thrown', duration: 2000 }] },
 ];
 
 export const DEFAULT_RULES: RuleInput[] = [
@@ -37,6 +46,16 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'hide', on: 'idle', chance: 0.05, cooldown: 120_000, priority: 30, action: 'hide' },
   { id: 'walk', on: 'idle', chance: 0.55, priority: 10, action: 'walk' },
   { id: 'sit', on: 'idle', chance: 1, priority: 0, action: 'sit' },
+
+  // The visitor. Clicks beat everything except landing; hover and near are gentle.
+  { id: 'land-after-throw', on: 'land', if: 'thrown', priority: 95, action: 'grumble' },
+  { id: 'land', on: 'land', priority: 90, action: 'land' },
+  { id: 'dblclick', on: 'dblclick', priority: 85, action: 'happy' },
+  { id: 'click', on: 'click', priority: 80, cooldown: 300, action: 'startle' },
+  { id: 'tap', on: 'tap', priority: 80, cooldown: 300, action: 'startle' },
+  { id: 'hover', on: 'hover', priority: 20, chance: 0.7, cooldown: 10_000, notDuring: ['sleep'], action: 'shy' },
+  { id: 'near-approach', on: 'near', priority: 15, chance: 0.3, cooldown: 20_000, notDuring: ['sleep'], action: 'approach' },
+  { id: 'near-notice', on: 'near', priority: 15, chance: 0.6, cooldown: 12_000, notDuring: ['sleep'], action: 'notice' },
 
   // Events from the host site.
   { id: 'tool-completed', on: 'tool-completed', priority: 60, cooldown: 3000, action: 'eat' },
@@ -49,6 +68,8 @@ export const DEFAULT_CONDITIONS: Record<string, ConditionFn> = {
   sleepy: ({ now, lastDone }) => now - (lastDone.sleep ?? 0) >= SLEEPY_AFTER_MS,
   /** 22:00–06:00 in the visitor's time zone. */
   night: ({ hour }) => hour >= 22 || hour < 6,
+  /** For "land": the pet was thrown rather than set down. */
+  thrown: ({ payload }) => !!(payload as { thrown?: boolean } | undefined)?.thrown,
 };
 
 /** A Behavior loaded with the defaults. Warnings would mean a bug in this file. */

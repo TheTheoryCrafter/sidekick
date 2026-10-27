@@ -27,10 +27,12 @@ describe('roles', () => {
   });
 
   it('follows the fallback chain for missing roles', () => {
-    // cream cat has no "dblclick": dblclick -> click
-    expect(resolveRole(cat, 'dblclick')).toBe('shocked');
+    // cream cat has no "dblclick": dblclick -> success
+    expect(resolveRole(cat, 'dblclick')).toBe('dance');
+    // no "zoomies"-style gaps here, so use a pet with only click for the second hop
+    expect(resolveRole(pet({ click: 'a' }), 'dblclick')).toBe('a');
     // no "near": near -> hover
-    expect(resolveRole(cat, 'near')).toBe('teary');
+    expect(resolveRole(pet({ hover: 'b' }), 'near')).toBe('b');
     // no "fall": fall -> dragged
     expect(resolveRole(cat, 'fall')).toBe('held');
   });

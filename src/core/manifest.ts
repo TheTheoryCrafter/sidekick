@@ -38,6 +38,8 @@ export interface PetManifest {
   anchor: [number, number];
   /** Direction the artwork faces. The renderer mirrors it for the other way. */
   facing: 'left' | 'right';
+  /** Clickable area inside a frame as [x, y, width, height] in sheet px. Default: the whole frame. */
+  hitbox: [number, number, number, number];
   animations: Record<string, AnimationDef>;
   roles: Record<string, RoleValue>;
   traits: Traits;
@@ -143,6 +145,15 @@ export function validateManifest(input: unknown): ValidationResult {
     else warnings.push('"anchor" is not [x, y]; using bottom centre.');
   }
 
+  let hitbox: [number, number, number, number] = [0, 0, fw, fh];
+  if (input.hitbox !== undefined) {
+    const h = input.hitbox;
+    const ok = Array.isArray(h) && h.length === 4 && h.every((n) => typeof n === 'number' && n >= 0) &&
+      h[2] > 0 && h[3] > 0 && h[0] + h[2] <= fw && h[1] + h[3] <= fh;
+    if (ok) hitbox = h as [number, number, number, number];
+    else warnings.push('"hitbox" must be [x, y, width, height] inside the frame; using the whole frame.');
+  }
+
   let facing: 'left' | 'right' = 'right';
   if (input.facing !== undefined) {
     if (input.facing === 'left' || input.facing === 'right') facing = input.facing;
@@ -166,6 +177,7 @@ export function validateManifest(input: unknown): ValidationResult {
       ...(sheetSize ? { sheetSize } : {}),
       anchor,
       facing,
+      hitbox,
       animations,
       roles,
       traits,

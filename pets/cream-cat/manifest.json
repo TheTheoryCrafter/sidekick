@@ -14,6 +14,7 @@
     16,
     32
   ],
+  "hitbox": [2, 4, 28, 28],
   "animations": {
     "idle": {
       "row": 0,
@@ -225,6 +226,8 @@
     "sleep": "sleep",
     "tired": "yawn",
     "hover": "teary",
+    "near": "curious",
+    "thrown": "angry",
     "click": "shocked",
     "dragged": "held",
     "poop": "poop",
