@@ -107,7 +107,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:OWNER/sidekick#v0.1.0"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.0"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.

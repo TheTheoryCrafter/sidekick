@@ -29,13 +29,12 @@ wasn't clicked, because that needs a real login.
 theorycrafter installs Sidekick straight from GitHub. The built files (`dist/`) are
 committed, so nothing has to be compiled during install.
 
-1. Create an empty GitHub repository, for example `sidekick`. It can be private only if
-   Lovable's installer can read it, so **public is simplest**.
-2. From `C:\Users\User\Claude Projects\Sidekick`, run these commands. Replace `OWNER` with
-   your GitHub user or organisation.
+The repository is [TheTheoryCrafter/sidekick](https://github.com/TheTheoryCrafter/sidekick).
+It must be readable by Lovable's installer, so **public is simplest**. It was set up from
+`C:\Users\User\Claude Projects\Sidekick` with:
 
 ```bash
-git remote add origin https://github.com/OWNER/sidekick.git
+git remote add origin https://github.com/TheTheoryCrafter/sidekick.git
 ```
 
 ```bash
@@ -55,13 +54,13 @@ bump the tag in theorycrafter's `package.json`.
 
 ## 2. Ask Lovable to do it
 
-Paste this into Lovable, after replacing `OWNER`:
+Paste this into Lovable:
 
 ````text
 Add the "Sidekick" website pet to the site. Follow these steps exactly and don't change anything else.
 
 1. In package.json "dependencies", add:
-   "sidekick-pet": "github:OWNER/sidekick#v0.1.0"
+   "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.0"
 
 2. Create src/components/WebsitePet.tsx with exactly this content:
 

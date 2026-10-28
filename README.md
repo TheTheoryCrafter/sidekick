@@ -26,22 +26,21 @@ Contents: [Install](#install) · [Setup by framework](#setup-by-framework) ·
 
 ## Install
 
-Sidekick is installed from GitHub. The built files in `dist/` are committed, so no build
-runs on install. Replace `OWNER` with the GitHub account that hosts this repository, and
-pin a tag.
+Sidekick is installed from GitHub ([TheTheoryCrafter/sidekick](https://github.com/TheTheoryCrafter/sidekick)).
+The built files in `dist/` are committed, so no build runs on install. Pin a tag.
 
 **With a package manager:**
 
 ```json
 "dependencies": {
-  "sidekick-pet": "github:OWNER/sidekick#v0.1.0"
+  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.0"
 }
 ```
 
 **As a script tag** (served by jsDelivr straight from GitHub):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/OWNER/sidekick@v0.1.0/dist/sidekick.js" data-menu defer></script>
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.0/dist/sidekick.js" data-menu defer></script>
 ```
 
 The script finds its pets in the `pets/` folder next to itself, so there is nothing else
@@ -69,7 +68,7 @@ outlives your page routes. A second `init()` returns the same pet.
 ### Plain HTML, WordPress, Webflow
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/OWNER/sidekick@v0.1.0/dist/sidekick.js"
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.0/dist/sidekick.js"
         data-menu data-scale="2" defer></script>
 ```
 
