@@ -5,6 +5,8 @@ export interface AnimationDef {
     frames: number;
     fps: number;
     loop: boolean;
+    /** A one-shot that stays on its last frame for the rest of a longer step (a collapse, lying down). */
+    hold?: boolean;
     /** First column of the animation (0-based). Defaults to 0. */
     col?: number;
     label?: string;
@@ -36,6 +38,8 @@ export interface PetManifest {
     animations: Record<string, AnimationDef>;
     roles: Record<string, RoleValue>;
     traits: Traits;
+    /** Size relative to the `scale` option: 0.5 draws 64 px art like 32 px art. Default 1. */
+    scale: number;
 }
 export interface ValidationResult {
     manifest: PetManifest | null;

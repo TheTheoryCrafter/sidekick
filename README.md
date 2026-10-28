@@ -33,18 +33,28 @@ The built files in `dist/` are committed, so no build runs on install. Pin a tag
 
 ```json
 "dependencies": {
-  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.1"
+  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.2"
 }
 ```
 
 **As a script tag** (served by jsDelivr straight from GitHub):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.1/dist/sidekick.js" data-menu defer></script>
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.2/dist/sidekick.js" data-menu defer></script>
 ```
 
 The script finds its pets in the `pets/` folder next to itself, so there is nothing else
 to copy.
+
+### The pets
+
+| id | Pet | Its own extras |
+| --- | --- | --- |
+| `cream-cat` | Cream cat (the default) | hides in a box, poops |
+| `dalmatian` · `husky` · `labrador` · `rottweiler` · `golden-retriever` | Dogs | sniff around, bark; snarl after a throw, collapse on errors |
+| `panda` | Panda (doesn't walk) | thinks, does yoga, snacks on bamboo, waves at you |
+
+Offer several with `pets: ["cream-cat", "husky", "panda"]`; visitors switch from the menu.
 
 ### Where the pet's art comes from
 
@@ -54,8 +64,8 @@ to copy.
 | A bundler (Vite, webpack, Next…) | `import creamCat from "sidekick-pet/pets/cream-cat"` | pass `pet: creamCat` |
 | A bundler, but you'd rather serve files | copy `node_modules/sidekick-pet/dist/pets` to your public folder as `/pets` | none (`petsBaseUrl` defaults to `/pets/`) |
 
-The bundled `sidekick-pet/pets/cream-cat` module carries the sprite sheet as a data URL
-(about 39 kB gzipped). Load it lazily with the pet, as the examples below do. If your site
+Each `sidekick-pet/pets/<id>` module carries its sprite sheet as a data URL (cream cat
+39 kB, panda 30 kB, each dog 12–16 kB, gzipped). Load it lazily with the pet, as the examples below do. If your site
 has a Content-Security-Policy, either allow `img-src data:` or serve the folder instead.
 
 ---
@@ -68,7 +78,7 @@ outlives your page routes. A second `init()` returns the same pet.
 ### Plain HTML, WordPress, Webflow
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.1/dist/sidekick.js"
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.2/dist/sidekick.js"
         data-menu data-scale="2" defer></script>
 ```
 
@@ -424,7 +434,8 @@ The sheet is a grid of equal frames. Each animation is a run of frames on one ro
 | Field | |
 | --- | --- |
 | `id`, `sheet`, `frameSize`, `animations` | Required. `id` is a lowercase slug and matches the folder name. |
-| `animations.<name>` | `row` and `frames` are required; `fps`, `loop` (default `true`) and `col` (starting column, default 0) are optional. |
+| `animations.<name>` | `row` and `frames` are required; `fps`, `loop` (default `true`) and `col` (starting column, default 0) are optional. `hold: true` (with `loop: false`) keeps a one-shot on its last frame for the rest of a longer step, for a collapse or lying down. |
+| `scale` | Size relative to the `scale` option (default 1). Art drawn at 64 px per frame can use `0.5` to come out like 32 px art. |
 | `anchor` | The point in a frame that sits on the ground (default: bottom centre). |
 | `facing` | Which way the art faces (`"right"` by default); it's mirrored for the other way. |
 | `hitbox` | Clickable area `[x, y, w, h]` inside a frame (default: the whole frame). |
@@ -449,6 +460,23 @@ chain, and every chain ends at `ambient`, then the first animation:
 | `hide` · `hiding` | peeking from a box, staying in it | ambient · hide |
 | `poop` | squatting | ambient |
 | `poopEntity` | the pile left behind | **none**: a pet without it never poops |
+
+**Optional extras.** These roles have no fallback. The actions that use them only run for
+pets that have them, so a pet without one simply never does that:
+`hide` (the box), `sniff`, `bark`, `wave`, `think`, `yoga`, `snack` and `full` (after a snack).
+
+**A pet that doesn't walk.** Leave out `move`, and the pet stays where it is: free-time
+walks, runs, jumps and cursor-following are skipped, as with reduced motion. It can still be
+dragged and thrown.
+
+**Make a sheet from strips.** If your art comes as one PNG strip per animation, pack them:
+
+```bash
+node scripts/pack-sheet.mjs pets/my-dog/my-dog.png 64x64 idle=Idle.png run=Run.png sleep=Sleep.png
+```
+
+It drops trailing blank frames and prints the `sheetSize` and `animations` to paste into the
+manifest.
 
 **Check your pet.** Run `npm run dev` and open
 `http://localhost:5199/demo/m0-sprites.html?pet=my-dog`. The viewer plays every
@@ -518,7 +546,8 @@ pet.emit("party");
   `interruptible` and the rule's priority is at least the action's. An action started by
   a rule takes that rule's priority.
 - **Skipped rules.** A rule whose action can't start right now is skipped: `follow` with no
-  cursor, a `jump` with nothing in reach, or any movement under reduced motion.
+  cursor, a `jump` with nothing in reach, an optional role the pet doesn't have, or any
+  movement under reduced motion or for a pet that doesn't walk.
 - **Traits.** `scaleBy: "jumpiness" | "clinginess"` scales the chance by the pet's trait.
 
 **A condition** is a named function rules can list in `if`:
@@ -542,7 +571,8 @@ pet.registerRule({ id: "zoomies", on: "idle", action: "zoomies", chance: 0.01, c
 
 **Free time** (the `idle` event, highest priority first): sleep at night or when sleepy
 (after 3 minutes awake) · zoomies · jump onto something nearby · poop (only where nothing
-clickable is underneath) · hide in a box · walk · sit. Each lasts a few seconds, so the pet
+clickable is underneath) · hide in a box · snack · yoga · think · sniff · bark · walk · sit.
+The extras only run for pets that have them. Each lasts a few seconds, so the pet
 doesn't flit from one to the next.
 
 All defaults are exported as data, as `DEFAULT_ACTIONS` and `DEFAULT_RULES`, from
@@ -561,6 +591,16 @@ All defaults are exported as data, as `DEFAULT_ACTIONS` and `DEFAULT_RULES`, fro
 | `startle` · `happy` · `shy` | click for 1 s · dblclick for 2 s · hover |
 | `notice` · `approach` · `look` | near, facing the cursor · follow, then near · near |
 | `land` · `grumble` · `wake` | landing · landing, then thrown for 2 s · tired |
+| `sniff` · `bark` | wander, then sniff · bark |
+| `think` · `yoga` · `snack` | think for 4–7 s · three yoga poses, 2–3 s each · snack, then full for 2–3.5 s |
+| `wave` | wave, facing the cursor |
+
+| Extra rule | When | Chance · cooldown · priority |
+| --- | --- | --- |
+| `snack` · `yoga` · `think` | free time | 12% · 60 s · 28 · 15% · 60 s · 27 · 20% · 30 s · 26 |
+| `sniff` · `bark` | free time | 30% · 25 s · 25 · 10% · 40 s · 24 |
+| `tab-return-wave` | back after 30 s away | 80% · – · 41 (beats `happy`) |
+| `page-change-wave` · `visitor-return-wave` | route change · visitor back | 80% · 2 s · 31 · 60% · – · 31 (beat `look` and `notice`) |
 
 **Poops.**
 - They're pinned to the element under them, or to the page, so they scroll with the
@@ -603,7 +643,7 @@ npm run build
 
 - `npm run dev` serves the demos at <http://localhost:5199/demo/index.html>, one page per
   milestone: sprite viewer, walking, behavior debug panel, interaction, surfaces, poop,
-  host API, script tag with a strict CSP, and React.
+  host API, script tag with a strict CSP, React, and every bundled pet.
 - `npm test` runs the unit tests for the pure logic in `src/core/` (behavior, rules,
   physics, surfaces…), plus SSR tests.
 - `npm run build` writes `dist/` and fails if the script-tag build exceeds 20 kB gzipped.
@@ -615,6 +655,5 @@ theorycrafter.com integration lives in
 
 ## Licence
 
-Code: MIT (see [`LICENSE`](LICENSE)). The cream cat sprite sheet in `pets/cream-cat/` comes
-from a third-party pixel-art pack and is redistributed with the pack's permission. It is
-not covered by the MIT licence.
+Code: MIT (see [`LICENSE`](LICENSE)). The sprite sheets in `pets/` come from third-party
+pixel-art packs, are redistributed with permission, and are not covered by the MIT licence.

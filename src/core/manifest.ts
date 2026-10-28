@@ -9,6 +9,8 @@ export interface AnimationDef {
   frames: number;
   fps: number;
   loop: boolean;
+  /** A one-shot that stays on its last frame for the rest of a longer step (a collapse, lying down). */
+  hold?: boolean;
   /** First column of the animation (0-based). Defaults to 0. */
   col?: number;
   label?: string;
@@ -43,6 +45,8 @@ export interface PetManifest {
   animations: Record<string, AnimationDef>;
   roles: Record<string, RoleValue>;
   traits: Traits;
+  /** Size relative to the `scale` option: 0.5 draws 64 px art like 32 px art. Default 1. */
+  scale: number;
 }
 
 export interface ValidationResult {
@@ -113,6 +117,7 @@ export function validateManifest(input: unknown): ValidationResult {
       frames: raw.frames,
       fps: raw.fps,
       loop: raw.loop !== false,
+      ...(raw.hold === true && raw.loop === false ? { hold: true } : {}),
       ...(typeof raw.label === 'string' ? { label: raw.label } : {}),
     };
   }
@@ -168,6 +173,12 @@ export function validateManifest(input: unknown): ValidationResult {
     if (typeof t.clinginess === 'number') traits.clinginess = clamp01(t.clinginess);
   }
 
+  let scale = 1;
+  if (input.scale !== undefined) {
+    if (typeof input.scale === 'number' && input.scale > 0 && input.scale <= 8) scale = input.scale;
+    else warnings.push('"scale" must be a number between 0 and 8; using 1.');
+  }
+
   return {
     manifest: {
       id: id as string,
@@ -181,6 +192,7 @@ export function validateManifest(input: unknown): ValidationResult {
       animations,
       roles,
       traits,
+      scale,
     },
     errors,
     warnings,

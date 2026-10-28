@@ -34,6 +34,30 @@ Keep this list current. Add to it whenever a choice is made.
   and then the first animation, except roles in `ROLES_WITHOUT_DEFAULT` (`poopEntity`). A pet
   without `poopEntity` simply leaves no visible poop.
 - A role may map to a list of animations, and one is picked at random through an injected rng.
+- **Bundled pets (2026-10-29):** cream-cat, five dogs (dalmatian, husky, labrador, rottweiler,
+  golden-retriever) and panda. The dogs and panda came as one 64×64 PNG strip per animation
+  and were packed with `scripts/pack-sheet.mjs` (one row per animation, trailing blank frames
+  dropped). The Paid variants were used; the Free ones are subsets. The panda pack's
+  `Bambu.png` (a bamboo prop, 64×96) is unused.
+  - **Dogs:** idle, sit, lie-down, sleep, run, sniff, bark, attack, hurt, die. They have no
+    walk, so `move` is run (10 fps, `traits.speed` 2). click/success → bark, error → die
+    (held), thrown → attack, tool-used → sniff, hover → sit, dragged → run. hurt (red flash)
+    is unused.
+  - **Panda:** front-facing, no walk or run. ambient idle/idle-blink/sit, near → wave, click →
+    talk, hover → idle-blink, success/dblclick → happy, error/thrown → cry, tool-used → eat,
+    tired → rest (held) then sleep, plus think, yoga (three poses), snack (eat) and full.
+- **Pet `scale`** (manifest, default 1) multiplies the `scale` option; pixel size is still
+  rounded to whole device pixels. Dogs use 0.75 so they are a bit bigger than the cat; the
+  panda uses 0.5 (about the cat's height). At 0.5 the dogs were too small at a 1.25 DPR
+  (scale 2 × 0.5 rounds to 1 device px).
+- **`hold: true`** on a one-shot animation keeps its last frame for the rest of a longer step
+  instead of re-picking the role (a collapse that would otherwise replay).
+- **Optional roles** (in `ROLES_WITHOUT_DEFAULT`, no fallback): poopEntity, hide, sniff, bark,
+  wave, think, yoga, snack, full. `canStart` skips any action with a step whose optional role
+  the pet lacks, so pet-specific behavior lives in the shared defaults and each pet opts in
+  through its roles. `hide` became optional so pets without a box don't "hide" by idling.
+- **Stationary pets.** A pet without its own `move` role runs with `calm` on (no autonomous
+  movement, like reduced motion). Drag and throw still work.
 - cream-cat `poop-pile` is 4 frames, not 5. The sheet's 5th cell holds only a 6-pixel stray
   wisp, which made the looping pile blink out once per cycle.
 
@@ -112,7 +136,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.1"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.2"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.
@@ -445,5 +469,8 @@ Keep this list current. Add to it whenever a choice is made.
 - Node 24 LTS was installed via winget (2026-10-28). The preview tool reads
   `C:\Users\User\.claude\launch.json`, and the `sidekick-dev` entry there starts Vite for
   this repo.
+- **Dog and panda licence (settled 2026-10-29).** They come from paid packs (DogPackPaid,
+  PandaPremiumPack) with no licence file. The user confirmed they may be published in the
+  public repo and served by the CDN.
 - **Asset licence (settled 2026-10-28).** The user confirmed the cream cat sheet may be
   redistributed, so it can ship inside the npm package and the CDN/script-tag build.

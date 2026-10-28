@@ -7,7 +7,7 @@ import { DEFAULT_STEP_MS, pickRange, type ActionDef, type ActionStep, type Behav
 import type { PetManifest } from './manifest';
 import { PHYSICS, stepAir, type Vec } from './physics';
 import type { Rng } from './rng';
-import { resolveRole } from './roles';
+import { ROLES_WITHOUT_DEFAULT, resolveRole, roleCandidates } from './roles';
 import { frameAt } from './sprite';
 import { JUMP, findJumpTarget, jumpVelocity, landingSurface, type Surface } from './surfaces';
 
@@ -163,8 +163,9 @@ function jumpTarget(s: BrainState, ctx: BrainCtx) {
     { petW: ctx.petW, petH: ctx.petH, minY: ctx.minY, floorY: ctx.floorY, minX: ctx.minX, maxX: ctx.maxX }, ctx.rng);
 }
 
-/** Whether an action's first motion can happen right now. */
+/** Whether the pet can do this action right now: it has every optional role it uses, and its first motion is possible. */
 function canStart(def: ActionDef, s: BrainState, ctx: BrainCtx): boolean {
+  if (def.steps.some((st) => ROLES_WITHOUT_DEFAULT.has(st.role) && roleCandidates(ctx.manifest, st.role).length === 0)) return false;
   if (ctx.calm && def.steps.some((st) => (st.motion ?? 'none') !== 'none')) return false;
   const motion = def.steps[0]?.motion;
   if (motion === 'follow') return followTarget(s, ctx) !== null;
@@ -478,7 +479,7 @@ export function stepBrain(prev: BrainState, ctx: BrainCtx): BrainResult {
     // A one-shot animation ends an untimed, unmoving step. Otherwise pick the role
     // again so the pet doesn't freeze on a last frame.
     if (run.deadline === null && run.targetX === null) done = true;
-    else s = setAnim(s, step.role, ctx);
+    else if (!animDef.hold) s = setAnim(s, step.role, ctx);
   }
 
   if (!done) return { state: s, effects: fx };

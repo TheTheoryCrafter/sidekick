@@ -187,6 +187,8 @@ export declare class Sidekick {
     private applyExternal;
     private openMenu;
     private pixelSize;
+    /** The `scale` option times the pet's own size factor. */
+    private petScale;
     private ctx;
     /** Surfaces for the brain, with the one underfoot measured fresh so the pet rides scrolling exactly. */
     private surfaces;

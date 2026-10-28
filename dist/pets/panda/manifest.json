@@ -1,0 +1,167 @@
+{
+  "id": "panda",
+  "name": "Panda",
+  "sheet": "panda.png",
+  "frameSize": [
+    64,
+    64
+  ],
+  "sheetSize": [
+    768,
+    960
+  ],
+  "scale": 0.5,
+  "anchor": [
+    32,
+    64
+  ],
+  "facing": "right",
+  "hitbox": [
+    6,
+    2,
+    52,
+    62
+  ],
+  "animations": {
+    "idle": {
+      "label": "Standing",
+      "row": 0,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "idle-blink": {
+      "label": "Standing, blinking",
+      "row": 1,
+      "frames": 12,
+      "fps": 8,
+      "loop": true
+    },
+    "sit": {
+      "label": "Sitting",
+      "row": 2,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    },
+    "talk": {
+      "label": "Sitting, chatting",
+      "row": 3,
+      "frames": 6,
+      "fps": 6,
+      "loop": true
+    },
+    "think": {
+      "label": "Thinking",
+      "row": 4,
+      "frames": 12,
+      "fps": 6,
+      "loop": true
+    },
+    "wave": {
+      "label": "Waving",
+      "row": 5,
+      "frames": 12,
+      "fps": 8,
+      "loop": false
+    },
+    "happy": {
+      "label": "Jumping for joy",
+      "row": 6,
+      "frames": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "cry": {
+      "label": "Crying",
+      "row": 7,
+      "frames": 4,
+      "fps": 5,
+      "loop": true
+    },
+    "eat": {
+      "label": "Munching bamboo",
+      "row": 8,
+      "frames": 12,
+      "fps": 8,
+      "loop": false
+    },
+    "so-full": {
+      "label": "So full",
+      "row": 9,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
+    },
+    "rest": {
+      "label": "Rolling over to rest",
+      "row": 10,
+      "frames": 7,
+      "fps": 6,
+      "loop": false,
+      "hold": true
+    },
+    "sleep": {
+      "label": "Asleep",
+      "row": 11,
+      "frames": 4,
+      "fps": 3,
+      "loop": true
+    },
+    "yoga-1": {
+      "label": "Yoga: plank",
+      "row": 12,
+      "frames": 3,
+      "fps": 2,
+      "loop": true
+    },
+    "yoga-2": {
+      "label": "Yoga: legs up",
+      "row": 13,
+      "frames": 3,
+      "fps": 2,
+      "loop": true
+    },
+    "yoga-3": {
+      "label": "Yoga: shoulder stand",
+      "row": 14,
+      "frames": 3,
+      "fps": 2,
+      "loop": true
+    }
+  },
+  "roles": {
+    "ambient": [
+      "idle",
+      "idle-blink",
+      "sit"
+    ],
+    "sleep": "sleep",
+    "tired": "rest",
+    "hover": "idle-blink",
+    "near": "wave",
+    "click": "talk",
+    "dblclick": "happy",
+    "dragged": "happy",
+    "fall": "happy",
+    "thrown": "cry",
+    "landing": "sit",
+    "success": "happy",
+    "error": "cry",
+    "tool-used": "eat",
+    "wave": "wave",
+    "think": "think",
+    "yoga": [
+      "yoga-1",
+      "yoga-2",
+      "yoga-3"
+    ],
+    "snack": "eat",
+    "full": "so-full"
+  },
+  "traits": {
+    "speed": 1,
+    "jumpiness": 0,
+    "clinginess": 0.3
+  }
+}

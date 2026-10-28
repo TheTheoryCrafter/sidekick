@@ -1,6 +1,6 @@
 {
   "name": "sidekick-pet",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A tiny pixel pet that lives on top of any website.",
   "type": "module",
   "license": "MIT",
@@ -23,9 +23,9 @@
       "types": "./dist/types/react.d.ts",
       "import": "./dist/react.mjs"
     },
-    "./pets/cream-cat": {
-      "types": "./dist/types/pets/cream-cat.d.ts",
-      "import": "./dist/pets/cream-cat.mjs"
+    "./pets/*": {
+      "types": "./dist/types/pets/*.d.ts",
+      "import": "./dist/pets/*.mjs"
     },
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"

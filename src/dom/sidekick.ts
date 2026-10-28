@@ -12,7 +12,7 @@ import { validateManifest, type PetManifest } from '../core/manifest';
 import type { Vec } from '../core/physics';
 import { normalizePoopOptions, poopSpot, type PoopOptions } from '../core/poop';
 import { seededRng, type Rng } from '../core/rng';
-import { resolveRole } from '../core/roles';
+import { hasOwnRole, resolveRole } from '../core/roles';
 import { initialSettings, type Settings } from '../core/settings';
 import type { Surface } from '../core/surfaces';
 import { createHost, type Host } from './host';
@@ -633,7 +633,12 @@ export class Sidekick {
   // ---- Simulation ---------------------------------------------------------
 
   private pixelSize(): number {
-    return SpriteView.pixelSize(this.opts.scale, this.win.devicePixelRatio || 1);
+    return SpriteView.pixelSize(this.petScale(), this.win.devicePixelRatio || 1);
+  }
+
+  /** The `scale` option times the pet's own size factor. */
+  private petScale(): number {
+    return this.opts.scale * (this.m?.manifest.scale ?? 1);
   }
 
   private ctx(dtMs: number): BrainCtx {
@@ -659,7 +664,8 @@ export class Sidekick {
       hour: new Date().getHours(),
       cursor: this.cursor,
       surfaces: this.surfaces(minY, m.hitbox[2] * px),
-      calm: this.calm,
+      // A pet with no walk of its own (the panda) stays put, like reduced motion.
+      calm: this.calm || !hasOwnRole(m, 'move'),
     };
   }
 
@@ -757,7 +763,7 @@ export class Sidekick {
       x: s.body.x,
       y: s.body.y,
       facing: s.body.facing,
-      scale: this.opts.scale,
+      scale: this.petScale(),
       dpr: this.win.devicePixelRatio || 1,
       cursor: m.input.isDragging ? 'grabbing' : 'grab',
     });

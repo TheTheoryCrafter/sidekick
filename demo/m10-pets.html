@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidekick · Pets</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.5 system-ui, sans-serif; background: #f6f3ee; color: #222; }
+    header { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 10px 16px; background: #1f2937; color: #fff; }
+    header a { color: #9ecbff; }
+    header button, header select { font: inherit; padding: 2px 8px; cursor: pointer; }
+    header button[aria-pressed="true"] { background: #fde68a; }
+    main { max-width: 900px; margin: 0 auto; padding: 16px 16px 220px; display: grid; gap: 16px; }
+    section { background: #fff; border: 1px solid #e3ddd3; border-radius: 8px; padding: 12px; }
+    h2 { font-size: 15px; margin: 0 0 6px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+    .btns button { font: inherit; padding: 3px 9px; cursor: pointer; }
+    #status { font: 12px ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <b>Pets</b>
+    <span id="pets" class="btns"></span>
+    <label>Speed <select id="speed"><option>1</option><option>4</option><option>10</option></select>×</label>
+    <a href="./index.html">All demos</a>
+  </header>
+  <main>
+    <section>
+      <h2>Do something now</h2>
+      <div class="btns" id="actions"></div>
+      <p id="status"></p>
+    </section>
+    <section>
+      <h2>Site events</h2>
+      <div class="btns">
+        <button data-emit="tool-completed">tool-completed</button>
+        <button data-emit="success">success</button>
+        <button data-emit="error">error</button>
+        <button data-emit="page-change">page-change</button>
+        <button data-emit="tab-return">tab-return</button>
+      </div>
+    </section>
+    <section><h2>A heading to stand on</h2><p>Dogs jump up here and sniff around. The panda doesn't walk: it sits, thinks, does yoga and snacks where it is. Drag any pet and throw it.</p></section>
+    <section><h2>Another one</h2><p>Click, double-click and hover over the pet to see its reactions. Right-click it for the menu.</p></section>
+  </main>
+  <script type="module" src="./m10-pets.ts"></script>
+</body>
+</html>

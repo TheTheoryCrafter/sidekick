@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Behavior, normalizeAction, normalizeRule, pickRange } from '../src/core/behavior';
 import { DEFAULT_RULES, defaultBehavior, DEFAULT_CONDITIONS, SLEEPY_AFTER_MS } from '../src/core/defaults';
 import { validateManifest } from '../src/core/manifest';
-import { roleCandidates } from '../src/core/roles';
+import { ROLES_WITHOUT_DEFAULT, roleCandidates } from '../src/core/roles';
 import creamCat from '../pets/cream-cat/manifest.json';
 
 describe('normalizeAction', () => {
@@ -100,7 +100,10 @@ describe('defaults', () => {
   });
 
   it('the cream cat has an animation for every role the defaults use', () => {
-    for (const a of b.actions.values()) for (const s of a.steps) expect(roleCandidates(cat, s.role).length, s.role).toBeGreaterThan(0);
+    for (const a of b.actions.values()) for (const s of a.steps) {
+      if (ROLES_WITHOUT_DEFAULT.has(s.role) && s.role !== 'hide') continue; // extras the cat does not have
+      expect(roleCandidates(cat, s.role).length, s.role).toBeGreaterThan(0);
+    }
   });
 
   it('sleepy and night conditions', () => {

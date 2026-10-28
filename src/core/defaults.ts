@@ -46,6 +46,15 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
   // Reactions to the page.
   { id: 'wake', role: 'tired' },
   { id: 'look', role: 'near' },
+
+  // Extras for pets that have the optional roles (sniff, bark, wave, think, yoga, snack, full).
+  // A pet without them simply never does these.
+  { id: 'sniff', steps: [{ role: 'move', motion: 'wander' }, { role: 'sniff' }] },
+  { id: 'bark', role: 'bark' },
+  { id: 'wave', role: 'wave', face: 'cursor' },
+  { id: 'think', role: 'think', duration: [4000, 7000] },
+  { id: 'yoga', steps: [{ role: 'yoga', duration: [2000, 3000] }, { role: 'yoga', duration: [2000, 3000] }, { role: 'yoga', duration: [2000, 3000] }] },
+  { id: 'snack', steps: [{ role: 'snack' }, { role: 'full', duration: [2000, 3500] }] },
 ];
 
 export const DEFAULT_RULES: RuleInput[] = [
@@ -58,6 +67,11 @@ export const DEFAULT_RULES: RuleInput[] = [
   // there is room for another, and nothing clickable is under the spot.
   { id: 'poop', on: 'idle', if: 'poop-spot', chance: 0.05, cooldown: 90_000, priority: 33, action: 'poop' },
   { id: 'hide', on: 'idle', chance: 0.05, cooldown: 120_000, priority: 30, action: 'hide' },
+  { id: 'snack', on: 'idle', chance: 0.12, cooldown: 60_000, priority: 28, action: 'snack' },
+  { id: 'yoga', on: 'idle', chance: 0.15, cooldown: 60_000, priority: 27, action: 'yoga' },
+  { id: 'think', on: 'idle', chance: 0.2, cooldown: 30_000, priority: 26, action: 'think' },
+  { id: 'sniff', on: 'idle', chance: 0.3, cooldown: 25_000, priority: 25, action: 'sniff' },
+  { id: 'bark', on: 'idle', chance: 0.1, cooldown: 40_000, priority: 24, action: 'bark' },
   { id: 'walk', on: 'idle', chance: 0.55, priority: 10, action: 'walk' },
   { id: 'sit', on: 'idle', chance: 1, priority: 0, action: 'sit' },
 
@@ -76,6 +90,10 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'visitor-return-wake', on: 'visitor-return', priority: 55, during: ['sleep'], action: 'wake' },
   { id: 'visitor-return', on: 'visitor-return', priority: 30, chance: 0.5, action: 'notice' },
   { id: 'tab-return', on: 'tab-return', priority: 40, chance: 0.8, action: 'happy' },
+  // Pets that can wave do that instead of the plain reactions below them.
+  { id: 'tab-return-wave', on: 'tab-return', priority: 41, chance: 0.8, action: 'wave' },
+  { id: 'page-change-wave', on: 'page-change', priority: 31, chance: 0.8, cooldown: 2000, notDuring: ['sleep'], action: 'wave' },
+  { id: 'visitor-return-wave', on: 'visitor-return', priority: 31, chance: 0.6, action: 'wave' },
   { id: 'page-change', on: 'page-change', priority: 30, chance: 0.8, cooldown: 2000, notDuring: ['sleep'], action: 'look' },
   { id: 'copy', on: 'copy', priority: 30, cooldown: 5000, notDuring: ['sleep'], action: 'eat' },
 
