@@ -83,13 +83,18 @@ export class PoopLayer {
   }
 
   /** Drop a poop with its feet at viewport (x, y), pinned to `on` (or the page). */
-  drop(x: number, y: number, on: Element | null, now: number): void {
+  drop(x: number, y: number, on: Element | null, now: number, px: number): void {
+    // Pin to an element that moves with the page: the surface under the pet, or else
+    // the content behind the pile. That follows any scroll container, including sites
+    // where <body> scrolls instead of the window.
+    const el = on && on.isConnected ? on : this.contentBehind(x, y, px);
     let anchor: Anchor;
-    if (on && on.isConnected) {
-      const r = on.getBoundingClientRect();
-      anchor = { kind: 'element', el: on, dx: x - r.left, dy: y - r.top };
+    if (el) {
+      const r = el.getBoundingClientRect();
+      anchor = { kind: 'element', el, dx: x - r.left, dy: y - r.top };
     } else {
-      anchor = { kind: 'page', x: x + this.win.scrollX, y: y + this.win.scrollY };
+      const sc = this.scroll();
+      anchor = { kind: 'page', x: x + sc.x, y: y + sc.y };
     }
     const poop: Poop<Anchor> = { id: this.nextId++, born: now, anchor };
     const live = this.placed.filter((p) => !p.gone);
@@ -148,8 +153,26 @@ export class PoopLayer {
     this.placed = [];
   }
 
+  /** The innermost page element behind the pile that isn't <html>, <body> or ours. */
+  private contentBehind(x: number, y: number, px: number): Element | null {
+    const r = this.footprint(x, y, px);
+    const doc = this.win.document;
+    const stack = doc.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return stack.find((e) => e !== this.host && !this.host.contains(e) && e !== doc.documentElement && e !== doc.body) ?? null;
+  }
+
+  /** How far the page has scrolled, whether the window or <body> is the scroller. */
+  private scroll(): { x: number; y: number } {
+    const doc = this.win.document;
+    const b = doc.body;
+    return { x: this.win.scrollX + (b ? b.scrollLeft : 0), y: this.win.scrollY + (b ? b.scrollTop : 0) };
+  }
+
   private position(a: Anchor): { x: number; y: number } | null {
-    if (a.kind === 'page') return { x: a.x - this.win.scrollX, y: a.y - this.win.scrollY };
+    if (a.kind === 'page') {
+      const sc = this.scroll();
+      return { x: a.x - sc.x, y: a.y - sc.y };
+    }
     if (!a.el.isConnected) return null;
     const r = a.el.getBoundingClientRect();
     if (r.width === 0 && r.height === 0) return null;

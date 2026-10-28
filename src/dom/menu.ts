@@ -121,13 +121,14 @@ export class Menu {
 export class RestoreButton {
   private el: HTMLDivElement;
 
-  constructor(win: Window, stage: HTMLElement, onClick: () => void, title: string) {
+  constructor(win: Window, stage: HTMLElement, onClick: () => void, title: string, corner: 'bottom-right' | 'bottom-left' = 'bottom-right') {
     const doc = win.document;
     const p = palette(win);
     const el = doc.createElement('div');
     const s = el.style;
     s.position = 'absolute';
-    s.right = '12px';
+    if (corner === 'bottom-left') s.left = '12px';
+    else s.right = '12px';
     s.bottom = '12px';
     s.width = '32px';
     s.height = '32px';

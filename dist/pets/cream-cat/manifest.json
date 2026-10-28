@@ -1,0 +1,247 @@
+{
+  "id": "cream-cat",
+  "name": "Cream cat",
+  "sheet": "cream-cat-sheet-v2.png",
+  "frameSize": [
+    32,
+    32
+  ],
+  "sheetSize": [
+    512,
+    960
+  ],
+  "anchor": [
+    16,
+    32
+  ],
+  "hitbox": [2, 4, 28, 28],
+  "animations": {
+    "idle": {
+      "row": 0,
+      "frames": 10,
+      "fps": 8,
+      "loop": true,
+      "label": "Sitting, tail swish"
+    },
+    "idle-blink": {
+      "row": 1,
+      "frames": 10,
+      "fps": 8,
+      "loop": true,
+      "label": "Sitting, tail swish with a blink"
+    },
+    "sleep": {
+      "row": 2,
+      "frames": 4,
+      "fps": 3,
+      "loop": true,
+      "label": "Curled up asleep"
+    },
+    "dance": {
+      "row": 3,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "label": "Bouncing on hind legs"
+    },
+    "yawn": {
+      "row": 4,
+      "frames": 8,
+      "fps": 8,
+      "loop": false,
+      "label": "Big yawn"
+    },
+    "held": {
+      "row": 5,
+      "frames": 12,
+      "fps": 8,
+      "loop": true,
+      "label": "Upright, paws up"
+    },
+    "lie": {
+      "row": 6,
+      "frames": 12,
+      "fps": 6,
+      "loop": true,
+      "label": "Lying down, breathing"
+    },
+    "curious": {
+      "row": 7,
+      "frames": 9,
+      "fps": 6,
+      "loop": false,
+      "label": "Head tilt, looking down"
+    },
+    "cry": {
+      "row": 8,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "label": "Crying"
+    },
+    "box-peek": {
+      "row": 9,
+      "frames": 12,
+      "fps": 8,
+      "loop": false,
+      "label": "Pops up out of a box"
+    },
+    "box-idle": {
+      "row": 10,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "label": "In the box, tail wag"
+    },
+    "box-idle-2": {
+      "row": 11,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "label": "In the box, tail wag (alt)"
+    },
+    "shocked": {
+      "row": 12,
+      "frames": 12,
+      "fps": 12,
+      "loop": true,
+      "label": "Shocked, mouth open, shaking"
+    },
+    "eat": {
+      "row": 13,
+      "frames": 15,
+      "fps": 8,
+      "loop": false,
+      "label": "Eating from a bowl"
+    },
+    "sit-side": {
+      "row": 14,
+      "frames": 6,
+      "fps": 6,
+      "loop": true,
+      "label": "Sitting side-on, tail swish"
+    },
+    "doze": {
+      "row": 15,
+      "frames": 13,
+      "fps": 6,
+      "loop": false,
+      "label": "Nodding off"
+    },
+    "angry": {
+      "row": 16,
+      "frames": 9,
+      "fps": 8,
+      "loop": false,
+      "label": "Anger mark, shouting"
+    },
+    "teary": {
+      "row": 17,
+      "frames": 12,
+      "fps": 6,
+      "loop": false,
+      "label": "Eyes well up, then recovers"
+    },
+    "grumpy": {
+      "row": 18,
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "label": "Grumpy face"
+    },
+    "groom": {
+      "row": 19,
+      "frames": 11,
+      "fps": 8,
+      "loop": true,
+      "label": "Licking a paw"
+    },
+    "ko": {
+      "row": 20,
+      "frames": 5,
+      "fps": 3,
+      "loop": true,
+      "label": "Knocked out on a drip"
+    },
+    "sick": {
+      "row": 21,
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "label": "Thermometer, unwell"
+    },
+    "walk": {
+      "row": 25,
+      "frames": 8,
+      "fps": 10,
+      "loop": true,
+      "label": "Walking",
+      "new": true
+    },
+    "run": {
+      "row": 26,
+      "frames": 4,
+      "fps": 12,
+      "loop": true,
+      "label": "Running",
+      "new": true
+    },
+    "jump": {
+      "row": 27,
+      "frames": 4,
+      "fps": 8,
+      "loop": false,
+      "label": "Crouch, launch, tuck, land",
+      "new": true
+    },
+    "poop": {
+      "row": 28,
+      "frames": 6,
+      "fps": 4,
+      "loop": false,
+      "label": "Tail up, squat, strain, scratch",
+      "new": true
+    },
+    "poop-pile": {
+      "row": 29,
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "label": "The pile it leaves behind",
+      "new": true
+    }
+  },
+  "roles": {
+    "ambient": [
+      "idle",
+      "idle-blink",
+      "sit-side",
+      "groom",
+      "lie",
+      "yawn",
+      "doze",
+      "curious"
+    ],
+    "move": "walk",
+    "sleep": "sleep",
+    "tired": "yawn",
+    "hover": "teary",
+    "near": "curious",
+    "thrown": "angry",
+    "click": "shocked",
+    "dragged": "held",
+    "poop": "poop",
+    "error": "ko",
+    "success": "dance",
+    "tool-used": "eat",
+    "hide": "box-peek",
+    "zoomies": "run",
+    "poopEntity": "poop-pile",
+    "landing": "jump"
+  },
+  "traits": {
+    "speed": 1.0,
+    "jumpiness": 0.2,
+    "clinginess": 0.5
+  }
+}

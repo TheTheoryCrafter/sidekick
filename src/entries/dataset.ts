@@ -22,7 +22,8 @@ const list = (v: string | undefined) => v?.split(',').map((s) => s.trim()).filte
  * Supported: data-pet, data-pets ("a,b"), data-pets-base, data-scale,
  * data-surfaces ("false" or a selector), data-poop ("false"), data-poop-max,
  * data-poop-ttl (ms), data-enabled, data-persist, data-storage-key, data-menu,
- * data-idle-after (ms), data-motion ("auto" | "reduced" | "full").
+ * data-idle-after (ms), data-motion ("auto" | "reduced" | "full"),
+ * data-restore-button ("bottom-right" | "bottom-left").
  */
 export function optionsFromDataset(d: Data, defaultPetsBase: string): SidekickOptions {
   const o: SidekickOptions = { petsBaseUrl: d.petsBase || defaultPetsBase };
@@ -47,6 +48,7 @@ export function optionsFromDataset(d: Data, defaultPetsBase: string): SidekickOp
   if (d.storageKey) o.storageKey = d.storageKey;
   const menu = bool(d.menu);
   if (menu !== undefined) o.menu = menu;
+  if (d.restoreButton === 'bottom-left' || d.restoreButton === 'bottom-right') o.restoreButton = d.restoreButton;
   const idle = num(d.idleAfter);
   if (idle !== undefined) o.idleAfter = idle;
   if (d.motion === 'auto' || d.motion === 'reduced' || d.motion === 'full') o.motion = d.motion;

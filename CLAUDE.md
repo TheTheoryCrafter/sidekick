@@ -105,6 +105,40 @@ Keep this list current. Add to it whenever a choice is made.
   the cream cat maps `tired` to `yawn`.
 - `setTimeScale(1–60)` is a debug aid that speeds up sim time, motion included.
 
+**theorycrafter integration (M8)**
+- **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
+  `"sidekick-pet": "github:OWNER/sidekick#v0.1.0"`.
+  - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
+    installs need no build step. Bun, which Lovable appears to use, doesn't run
+    dependencies' build scripts, so a `prepare` script would be fragile.
+  - **Releasing:** run `npm run build`, commit, tag, push the tag, then bump the tag on
+    the site. Never commit source changes without the rebuilt `dist/`.
+- **The guide.** `docs/integrations/theorycrafter/README.md` has a Lovable prompt, the
+  two new files (`WebsitePet.tsx`, `PetMenuItem.tsx`) and `site-changes.diff` for
+  `App.tsx` and both headers.
+  - The pet and the menu item are `React.lazy`, so the site's main bundle grows about
+    0.2 kB (146.8 → 147.0 kB gzipped).
+  - Tool events come from a **sonner toast bridge**: a MutationObserver reads
+    `[data-sonner-toast][data-type]`. Success on `/crafts/<tool>` → `tool-completed`,
+    success elsewhere → `success`, error → `error`. Nothing inside the tools changes.
+  - Everyone gets `menu`, and `restoreButton="bottom-left"` keeps the paw clear of the
+    mobile "I'm Bored" button. Logged-in users also get the profile-menu switch.
+- **Library fixes found through the site.**
+  - The site scrolls `<body>` (`html, body { height: 100%; overflow-y: auto }`), so
+    `window.scrollY` is always 0. Floor poops are now pinned to the content element
+    behind the pile; the page-coordinate fallback adds `body.scrollTop`.
+  - New `restoreButton` option and `data-restore-button` attribute.
+- **Dry run.** Done on a scratch copy of the site at `3690383`: it typechecks, builds,
+  and was checked in `vite preview`, logged out.
+  - Verified: success and error toasts trigger celebrate and faint, a route change keeps
+    the single instance, surfaces track while body scrolls, a floor poop moved 120 px with
+    a 120 px body scroll, and the menu's Hide plus the bottom-left paw work.
+  - Not verified: the logged-in profile switch (it needs a real login).
+  - Vite dev from another working directory can't find the site's Tailwind config, so use
+    `vite preview` of a build.
+  - The site has an existing peer conflict (date-fns 4 vs react-day-picker 8), so `npm ci`
+    needs `--legacy-peer-deps`.
+
 **Packaging, SSR, CSP and reduced motion (M7)**
 - **`npm run build`** (`scripts/build.mjs`, Vite JS API) produces:
   - `dist/sidekick.mjs`: the ESM core.
@@ -389,7 +423,7 @@ Keep this list current. Add to it whenever a choice is made.
 - [x] M5 Poop
 - [x] M6 Host events, sensors, persistence, built-in menu
 - [x] M7 Packaging (IIFE, ESM, React), SSR, CSP, size budget, reduced motion
-- [ ] M8 Integration guide for theorycrafter (React Router + shadcn profile menu, via Lovable)
+- [x] M8 Integration guide for theorycrafter (React Router + shadcn profile menu, via Lovable)
 - [ ] M9 README
 
 ## Open notes
@@ -402,6 +436,3 @@ Keep this list current. Add to it whenever a choice is made.
   this repo.
 - **Asset licence (settled 2026-10-28).** The user confirmed the cream cat sheet may be
   redistributed, so it can ship inside the npm package and the CDN/script-tag build.
-- **Installing from git (M8).** `dist/` is git-ignored. If theorycrafter installs Sidekick
-  from GitHub instead of npm, add a `prepare` script that builds, or commit `dist/` on a
-  release branch. Decide this in M8.

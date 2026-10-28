@@ -1,2 +1,4 @@
 * text=auto eol=lf
 *.png binary
+# Built files are committed for GitHub installs; keep them byte-stable.
+dist/** -diff linguist-generated

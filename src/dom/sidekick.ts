@@ -73,6 +73,8 @@ export interface SidekickOptions {
   storageKey?: string;
   /** Show a small built-in menu on right-click / long-press, and a button to bring the pet back. Default false. */
   menu?: boolean;
+  /** Corner for the button that brings a hidden pet back (with `menu`). Default "bottom-right". */
+  restoreButton?: 'bottom-right' | 'bottom-left';
   /** ms without input before the "visitor-idle" event. Default 60000. */
   idleAfter?: number;
   /**
@@ -162,6 +164,7 @@ export class Sidekick {
     scale: number;
     surfaces: string | false;
     menu: boolean;
+    restoreButton: 'bottom-right' | 'bottom-left';
     idleAfter: number;
   };
   private poopOpts: PoopOptions | null;
@@ -207,6 +210,7 @@ export class Sidekick {
       scale: clampScale(options.scale ?? 2),
       surfaces: options.surfaces === undefined ? DEFAULT_SURFACE_SELECTOR : options.surfaces,
       menu: options.menu === true,
+      restoreButton: options.restoreButton === 'bottom-left' ? 'bottom-left' : 'bottom-right',
       idleAfter: typeof options.idleAfter === 'number' && options.idleAfter >= 1000 ? options.idleAfter : 60_000,
     };
     this.poopOpts = normalizePoopOptions(options.poop);
@@ -500,7 +504,7 @@ export class Sidekick {
   private showDisabled(): void {
     this.status = 'disabled';
     if (this.menu && this.host && !this.restore) {
-      this.restore = new RestoreButton(this.win, this.host.stage, () => this.enable(), 'Bring the pet back');
+      this.restore = new RestoreButton(this.win, this.host.stage, () => this.enable(), 'Bring the pet back', this.opts.restoreButton);
     }
   }
 
@@ -720,7 +724,7 @@ export class Sidekick {
     const poops = this.m?.poops;
     if (!spot || !poops || !poops.isSafeAt(spot.x, spot.y, this.pixelSize())) return;
     const on = this.state!.on;
-    poops.drop(spot.x, spot.y, on === null ? null : this.m?.scanner?.elementOf(on) ?? null, this.simTime);
+    poops.drop(spot.x, spot.y, on === null ? null : this.m?.scanner?.elementOf(on) ?? null, this.simTime, this.pixelSize());
   }
 
   private apply(r: BrainResult): void {

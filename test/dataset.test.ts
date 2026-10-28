@@ -10,11 +10,11 @@ describe('optionsFromDataset', () => {
     expect(optionsFromDataset({
       pet: 'cream-cat', pets: 'cream-cat, box-cat ,', petsBase: '/my-pets/', scale: '3',
       surfaces: 'main h2', poopMax: '2', poopTtl: '60000', enabled: 'false', persist: 'false',
-      storageKey: 'k', menu: '', idleAfter: '5000', motion: 'reduced',
+      storageKey: 'k', menu: '', idleAfter: '5000', motion: 'reduced', restoreButton: 'bottom-left',
     }, '/pets/')).toEqual({
       petsBaseUrl: '/my-pets/', pet: 'cream-cat', pets: ['cream-cat', 'box-cat'], scale: 3,
       surfaces: 'main h2', poop: { max: 2, ttl: 60000 }, enabled: false, persist: false,
-      storageKey: 'k', menu: true, idleAfter: 5000, motion: 'reduced',
+      storageKey: 'k', menu: true, idleAfter: 5000, motion: 'reduced', restoreButton: 'bottom-left',
     });
   });
 
