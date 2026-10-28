@@ -75,6 +75,17 @@ Keep this list current. Add to it whenever a choice is made.
   the next crisp size down over a ~15% shrink with uneven pixels. At the default scale 2 it
   drops one device pixel per art pixel: 1× screens 2 → 1, 1.25× 3 → 2, 1.5× 3 → 2, 2× 4 → 3.
   Any value from 0.625 to just under 0.75 gives those steps.
+- **Walk chin cleaned up (2026-10-29).** In all 8 walk frames the face's outline ran on below
+  the chin like a neck: two black outline pixels and a white one on each side (x 16 and
+  x 26, rows 18–19, 1 px higher on the bob frames 2 and 6). The user asked for both sides
+  gone: on the right they are now transparent, on the left the black ones take the body
+  colour and the white one the chin's pink edge. 48 pixels in row 25, nothing else. The
+  frame order and the cheek bulge were left as they are.
+  - Then the bottom-left pixel of the chin, (17, 19) ((17, 18) on the bob frames; the pink
+    edge pixel from the step above), became the body colour: 8 more pixels. The user picked
+    it in `exports/cream-cat-walk/pixel-picker.html`, which numbers the outline pixels and
+    shows the coordinates of a clicked one. Two guesses before that, (14, 15) and (15, 17),
+    were wrong and were undone.
 - **Per-animation `size: [w, h]`** for art bigger than `frameSize`. The strip starts at
   y = `row` × frame height and x = `col` × w, and is drawn bottom-centred on the usual frame;
   the hitbox stays the usual frame's. Bounds are checked in sheet pixels.
@@ -172,7 +183,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.6"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.7"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.

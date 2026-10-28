@@ -1,6 +1,6 @@
 {
   "name": "sidekick-pet",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A tiny pixel pet that lives on top of any website.",
   "type": "module",
   "license": "MIT",
