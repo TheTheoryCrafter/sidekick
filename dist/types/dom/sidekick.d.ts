@@ -105,6 +105,8 @@ export declare class Sidekick {
     /** Pets given as data, by id. */
     private petDefs;
     private calm;
+    /** Sim times of recent clicks on the pet, to notice pestering. */
+    private clickTimes;
     private rng;
     private behavior;
     private settings;

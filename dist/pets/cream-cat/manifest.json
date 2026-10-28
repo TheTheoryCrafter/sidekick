@@ -110,10 +110,28 @@
     },
     "eat": {
       "row": 13,
-      "frames": 15,
+      "frames": 6,
       "fps": 8,
       "loop": false,
-      "label": "Eating from a bowl"
+      "next": "eat-munch",
+      "label": "Leaning into the bowl"
+    },
+    "eat-munch": {
+      "row": 13,
+      "col": 6,
+      "frames": 7,
+      "fps": 7,
+      "loop": true,
+      "label": "Munching, head in the bowl"
+    },
+    "eat-finish": {
+      "row": 13,
+      "col": 13,
+      "frames": 2,
+      "fps": 6,
+      "loop": false,
+      "next": "groom",
+      "label": "Lifting its head from the bowl"
     },
     "sit-side": {
       "row": 14,
@@ -249,11 +267,15 @@
     "zoomies": "run",
     "poopEntity": "poop-pile",
     "landing": "jump",
-    "broom": "broom"
+    "broom": "broom",
+    "snack": "eat",
+    "full": "eat-finish",
+    "upset": "cry"
   },
   "traits": {
     "speed": 1.0,
     "jumpiness": 0.2,
-    "clinginess": 0.5
+    "clinginess": 0.5,
+    "appetite": 0.25
   }
 }

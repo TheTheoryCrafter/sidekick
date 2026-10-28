@@ -12,6 +12,7 @@ import { validateManifest, type PetManifest } from '../core/manifest';
 import type { Vec } from '../core/physics';
 import { normalizePoopOptions, poopSpot, type PoopOptions } from '../core/poop';
 import { seededRng, type Rng } from '../core/rng';
+import { recordClick } from '../core/pester';
 import { hasOwnRole, resolveRole } from '../core/roles';
 import { initialSettings, type Settings } from '../core/settings';
 import type { Surface } from '../core/surfaces';
@@ -171,6 +172,8 @@ export class Sidekick {
   /** Pets given as data, by id. */
   private petDefs = new Map<string, PetDefinition>();
   private calm = false;
+  /** Sim times of recent clicks on the pet, to notice pestering. */
+  private clickTimes: number[] = [];
   private rng: Rng;
   private behavior: Behavior = defaultBehavior();
   private settings: Settings;
@@ -445,7 +448,13 @@ export class Sidekick {
       : null;
     const input = new PointerInput(win, view.hit, {
       hover: () => this.emit('hover'),
-      click: (kind) => this.emit(kind),
+      click: (kind) => {
+        this.emit(kind);
+        // Every press counts: the second of a quick pair arrives as "dblclick" alone.
+        const r = recordClick(this.clickTimes, this.simTime);
+        this.clickTimes = r.times;
+        if (r.pestered) this.emit('pestered');
+      },
       cursor: (pos) => { this.cursor = pos; },
       grab: (at) => {
         if (!this.state) return;

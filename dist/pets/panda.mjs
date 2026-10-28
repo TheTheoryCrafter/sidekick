@@ -146,7 +146,8 @@ const A = "panda", f = "Panda", P = "panda.png", v = [
     "yoga-3"
   ],
   snack: "eat",
-  full: "so-full"
+  full: "so-full",
+  upset: "cry"
 }, B = {
   speed: 1,
   jumpiness: 0,

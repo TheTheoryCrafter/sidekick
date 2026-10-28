@@ -24,7 +24,7 @@ describe('validateManifest', () => {
     expect(m.anchor).toEqual([16, 32]);
     expect(m.facing).toBe('right');
     expect(m.hitbox).toEqual([0, 0, 32, 32]);
-    expect(m.traits).toEqual({ speed: 1, jumpiness: 0.2, clinginess: 0.5 });
+    expect(m.traits).toEqual({ speed: 1, jumpiness: 0.2, clinginess: 0.5, appetite: 0.5 });
     expect(m.roles).toEqual({});
     expect(m.animations.sit!.col).toBe(0);
   });

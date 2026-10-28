@@ -476,10 +476,19 @@ export function stepBrain(prev: BrainState, ctx: BrainCtx): BrainResult {
   const animDef = ctx.manifest.animations[s.anim];
   const animDone = !!animDef && !animDef.loop && frameAt(animDef, ctx.now - s.animStart).done;
   if (!done && animDone) {
-    // A one-shot animation ends an untimed, unmoving step. Otherwise pick the role
-    // again so the pet doesn't freeze on a last frame.
-    if (run.deadline === null && run.targetX === null) done = true;
-    else if (!animDef.hold) s = setAnim(s, step.role, ctx);
+    const next = animDef.next !== undefined ? ctx.manifest.animations[animDef.next] : undefined;
+    if (next) {
+      // A one-shot that leads into another (leaning into a bowl, then munching) carries on.
+      // An untimed step then gives a looping follow-up the usual 3 s.
+      const deadline = run.deadline === null && run.targetX === null && next.loop ? ctx.now + DEFAULT_STEP_MS : run.deadline;
+      s = { ...s, anim: animDef.next!, animStart: ctx.now, action: { ...s.action!, deadline } };
+    } else if (run.deadline === null && run.targetX === null) {
+      // A one-shot animation ends an untimed, unmoving step.
+      done = true;
+    } else if (!animDef.hold) {
+      // Otherwise pick the role again so the pet doesn't freeze on a last frame.
+      s = setAnim(s, step.role, ctx);
+    }
   }
 
   if (!done) return { state: s, effects: fx };

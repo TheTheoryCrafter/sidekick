@@ -38,9 +38,9 @@ describe('bundled pets', () => {
   });
 
   it('each pet has its own extras', () => {
-    expect(extrasOf(load('cream-cat'))).toEqual(['broom', 'hide', 'poopEntity']);
+    expect(extrasOf(load('cream-cat'))).toEqual(['broom', 'hide', 'poopEntity', 'snack']);
     for (const d of DOGS) expect(extrasOf(load(d)), d).toEqual(['bark', 'sniff']);
-    expect(extrasOf(load('panda'))).toEqual(['full', 'snack', 'think', 'wave', 'yoga']);
+    expect(extrasOf(load('panda'))).toEqual(['snack', 'think', 'wave', 'yoga']);
   });
 
   it('pet sizes: the cat one crisp step below scale 2, dogs bigger than it, the panda about its size', () => {
@@ -89,6 +89,61 @@ describe('bundled pets', () => {
     const rule = ctx.behavior.rulesFor('idle').find((r) => r.id === 'broom-zoomies')!;
     expect([rule.chance, rule.cooldown, rule.priority]).toEqual([0.05, 120_000, 39]);
     expect(roleCandidates(load('husky'), 'broom')).toEqual([]);
+  });
+
+  it('the cat snacks in its free time, half as often as the panda', () => {
+    const cat = load('cream-cat');
+    const ctx = ctxFor(cat);
+    const s = play(createBrain(500, ctx), 'snack', ctx).state;
+    expect(s.anim).toBe('eat');
+    const rule = ctx.behavior.rulesFor('idle').find((r) => r.id === 'snack')!;
+    expect(rule.scaleBy).toBe('appetite');
+    const effective = (m: PetManifest) => Math.min(1, rule.chance * m.traits.appetite * 2);
+    expect(effective(cat)).toBeCloseTo(0.06);
+    expect(effective(load('panda'))).toBeCloseTo(0.12);
+    // Leans in (0.75 s), munches until the 5–8 s step ends, lifts its head, then licks its paw.
+    const seen: string[] = [];
+    let t = s;
+    for (let now = 0; now < 7000; now += 1000 / 60) {
+      t = stepBrain(t, { ...ctx, now }).state;
+      if (seen[seen.length - 1] !== t.anim) seen.push(t.anim);
+      if (now > 900 && now < 4900) expect(t.anim, `${Math.round(now)} ms`).toBe('eat-munch');
+    }
+    expect(seen).toEqual(['eat', 'eat-munch', 'eat-finish', 'groom']);
+    expect(t.action?.id).toBe('snack');
+  });
+
+  it('"next" is validated: an unknown follow-up is dropped with a warning', () => {
+    const v = validateManifest({ id: 'p', sheet: 's.png', frameSize: [32, 32], animations: { a: { row: 0, frames: 2, fps: 4, loop: false, next: 'nope' }, b: { row: 1, frames: 1, fps: 1, loop: false, next: 'a' } } });
+    expect(v.manifest!.animations.a!.next).toBeUndefined();
+    expect(v.manifest!.animations.b!.next).toBe('a');
+    expect(v.warnings.join()).toContain('"nope"');
+  });
+
+  it('eating after a tool finishes ends by lifting its head; a dog just idles a moment', () => {
+    const ctx = ctxFor(load('cream-cat'));
+    let s = play(createBrain(500, ctx), 'eat', ctx).state;
+    const seen: string[] = [];
+    // 4 s at the bowl, then 1.5 s for "full" (the shortest of each range).
+    for (let now = 0; now < 5400; now += 1000 / 60) {
+      s = stepBrain(s, { ...ctx, now }).state;
+      if (seen[seen.length - 1] !== s.anim) seen.push(s.anim);
+    }
+    expect(seen).toEqual(['eat', 'eat-munch', 'eat-finish', 'groom']);
+    expect(s.action?.id).toBe('eat');
+    const husky = load('husky');
+    expect(roleCandidates(husky, 'full')).toEqual(roleCandidates(husky, 'ambient'));
+  });
+
+  it('too many clicks make the cat cry, and more clicks do not cut it short', () => {
+    const ctx = ctxFor(load('cream-cat'));
+    const crying = dispatch(play(createBrain(500, ctx), 'startle', ctx).state, 'pestered', ctx).state;
+    expect(crying.action?.id).toBe('cry');
+    expect(crying.anim).toBe('cry');
+    expect(dispatch(crying, 'click', ctx).state.action?.id).toBe('cry');
+    expect(roleCandidates(load('panda'), 'upset')).toEqual(['cry']);
+    // Dogs fall back to their after-a-throw snarl.
+    expect(roleCandidates(load('husky'), 'upset')).toEqual(['attack']);
   });
 
   it('a collapse (hold) stays on its last frame for the rest of the faint', () => {

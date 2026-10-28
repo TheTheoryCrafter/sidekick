@@ -87,7 +87,7 @@ describe('README examples', () => {
   it('the README default-behavior tables list every default action', () => {
     const ids = DEFAULT_ACTIONS.map((a) => a.id).sort();
     expect(ids).toEqual([
-      'approach', 'bark', 'broom-zoomies', 'celebrate', 'eat', 'faint', 'grumble', 'happy', 'hide', 'jump', 'land', 'look',
+      'approach', 'bark', 'broom-zoomies', 'celebrate', 'cry', 'eat', 'faint', 'grumble', 'happy', 'hide', 'jump', 'land', 'look',
       'notice', 'poop', 'shy', 'sit', 'sleep', 'snack', 'sniff', 'startle', 'think', 'wake', 'walk', 'wave',
       'yoga', 'zoomies',
     ]);

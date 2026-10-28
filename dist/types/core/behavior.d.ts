@@ -14,7 +14,7 @@ export type Range = number | readonly [number, number];
 export type Motion = 'none' | 'wander' | 'run' | 'follow' | 'jump';
 export declare const MOTIONS: readonly Motion[];
 /** Pet traits a rule can scale its chance by. */
-export type TraitName = 'jumpiness' | 'clinginess';
+export type TraitName = 'jumpiness' | 'clinginess' | 'appetite';
 export interface ActionStep {
     /** Role to animate (never an animation name). */
     role: string;

@@ -33,14 +33,14 @@ The built files in `dist/` are committed, so no build runs on install. Pin a tag
 
 ```json
 "dependencies": {
-  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.5"
+  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.6"
 }
 ```
 
 **As a script tag** (served by jsDelivr straight from GitHub):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.5/dist/sidekick.js" data-menu defer></script>
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.6/dist/sidekick.js" data-menu defer></script>
 ```
 
 The script finds its pets in the `pets/` folder next to itself, so there is nothing else
@@ -50,7 +50,7 @@ to copy.
 
 | id | Pet | Its own extras |
 | --- | --- | --- |
-| `cream-cat` | Cream cat (the default) | hides in a box, flies on a broom, poops |
+| `cream-cat` | Cream cat (the default) | hides in a box, flies on a broom, snacks now and then, poops |
 | `dalmatian` · `husky` · `labrador` · `rottweiler` · `golden-retriever` | Dogs | sniff around, bark; snarl after a throw, collapse on errors |
 | `panda` | Panda (doesn't walk) | thinks, does yoga, snacks on bamboo, waves at you |
 
@@ -78,7 +78,7 @@ outlives your page routes. A second `init()` returns the same pet.
 ### Plain HTML, WordPress, Webflow
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.5/dist/sidekick.js"
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.6/dist/sidekick.js"
         data-menu data-scale="2" defer></script>
 ```
 
@@ -368,6 +368,7 @@ Built-in events, sent by Sidekick itself:
 | `near` | the cursor comes close | looks at it, or walks over |
 | `click` / `tap` | a click, or a tap on touch | startled |
 | `dblclick` | double-click or double-tap | dances |
+| `pestered` | 5 clicks or taps on the pet within 4 s | cries for 3.5–5 s; more clicks don't cut it short |
 | `drag-start`, `drop`, `throw` | picked up, let go gently, let go fast | — (it's in the air) |
 | `land` `{ impact, thrown, jumped, surface }` | back on its feet | landing; grumpy after a throw |
 | `visitor-idle` | no input for `idleAfter` | naps |
@@ -437,13 +438,13 @@ The sheet is a grid of equal frames. Each animation is a run of frames on one ro
 | Field | |
 | --- | --- |
 | `id`, `sheet`, `frameSize`, `animations` | Required. `id` is a lowercase slug and matches the folder name. |
-| `animations.<name>` | `row` and `frames` are required; `fps`, `loop` (default `true`) and `col` (starting column, default 0) are optional. `hold: true` (with `loop: false`) keeps a one-shot on its last frame for the rest of a longer step, for a collapse or lying down. `size: [w, h]` gives one animation bigger frames than `frameSize` (its strip starts at `row` × the frame height and is drawn bottom-centred on the pet). |
+| `animations.<name>` | `row` and `frames` are required; `fps`, `loop` (default `true`) and `col` (starting column, default 0) are optional. `hold: true` (with `loop: false`) keeps a one-shot on its last frame for the rest of a longer step, for a collapse or lying down. `next: "<name>"` (with `loop: false`) leads straight into another animation when this one finishes, so one role can play "lean into the bowl" and then a looping "munch". `size: [w, h]` gives one animation bigger frames than `frameSize` (its strip starts at `row` × the frame height and is drawn bottom-centred on the pet). |
 | `scale` | Size relative to the `scale` option (default 1). Art drawn at 64 px per frame can use `0.5` to come out like 32 px art. |
 | `anchor` | The point in a frame that sits on the ground (default: bottom centre). |
 | `facing` | Which way the art faces (`"right"` by default); it's mirrored for the other way. |
 | `hitbox` | Clickable area `[x, y, w, h]` inside a frame (default: the whole frame). |
 | `sheetSize` | Optional; used to catch animations that run off the sheet. |
-| `traits` | `speed` multiplies walking speed; `jumpiness` and `clinginess` (0–1) scale how often it jumps and follows the cursor. |
+| `traits` | `speed` multiplies walking speed; `jumpiness`, `clinginess` and `appetite` (0–1, default 0.2, 0.5 and 0.5) scale how often it jumps, follows the cursor and snacks. |
 
 **Roles.** Behavior only ever asks for roles, never for animation names. A role maps to
 one animation, or to a list to pick from at random. A missing role falls back along a
@@ -461,12 +462,14 @@ chain, and every chain ends at `ambient`, then the first animation:
 | `landing` · `jump` · `thrown` | landing, jumping, after a throw | ambient · landing · click |
 | `success` · `error` · `tool-used` | site events | ambient · click · success |
 | `hide` · `hiding` | peeking from a box, staying in it | ambient · hide |
+| `full` | after eating (the cat lifts its head and licks a paw) | ambient |
+| `upset` | clicked too often | thrown |
 | `poop` | squatting | ambient |
 | `poopEntity` | the pile left behind | **none**: a pet without it never poops |
 
 **Optional extras.** These roles have no fallback. The actions that use them only run for
 pets that have them, so a pet without one simply never does that:
-`hide` (the box), `broom`, `sniff`, `bark`, `wave`, `think`, `yoga`, `snack` and `full` (after a snack).
+`hide` (the box), `broom`, `sniff`, `bark`, `wave`, `think`, `yoga` and `snack`.
 
 **A pet that doesn't walk.** Leave out `move`, and the pet stays where it is: free-time
 walks, runs, jumps and cursor-following are skipped, as with reduced motion. It can still be
@@ -551,7 +554,7 @@ pet.emit("party");
 - **Skipped rules.** A rule whose action can't start right now is skipped: `follow` with no
   cursor, a `jump` with nothing in reach, an optional role the pet doesn't have, or any
   movement under reduced motion or for a pet that doesn't walk.
-- **Traits.** `scaleBy: "jumpiness" | "clinginess"` scales the chance by the pet's trait.
+- **Traits.** `scaleBy: "jumpiness" | "clinginess" | "appetite"` scales the chance by the pet's trait (chance × trait × 2, at most 1).
 
 **A condition** is a named function rules can list in `if`:
 
@@ -591,18 +594,19 @@ All defaults are exported as data, as `DEFAULT_ACTIONS` and `DEFAULT_RULES`, fro
 | `jump` | jump onto something in reach, then ambient for 2–5 s |
 | `poop` | poop, then the pile appears behind the pet |
 | `hide` | hide, then hiding for 3–6 s |
-| `eat` · `celebrate` · `faint` | tool-used · success for 2.5 s · error for 4 s |
+| `eat` · `celebrate` · `faint` | tool-used for 4–6 s, then full for 1.5–2.5 s · success for 2.5 s · error for 4 s |
 | `startle` · `happy` · `shy` | click for 1 s · dblclick for 2 s · hover |
+| `cry` | upset for 3.5–5 s (rule `pestered`, priority 88, 10 s cooldown) |
 | `notice` · `approach` · `look` | near, facing the cursor · follow, then near · near |
 | `land` · `grumble` · `wake` | landing · landing, then thrown for 2 s · tired |
 | `sniff` · `bark` | wander, then sniff · bark |
-| `think` · `yoga` · `snack` | think for 4–7 s · three yoga poses, 2–3 s each · snack, then full for 2–3.5 s |
+| `think` · `yoga` · `snack` | think for 4–7 s · three yoga poses, 2–3 s each · snack for 5–8 s, then full for 2.5–4 s |
 | `wave` | wave, facing the cursor |
 
 | Extra rule | When | Chance · cooldown · priority |
 | --- | --- | --- |
 | `broom-zoomies` | free time | 5% · 120 s · 39 (just under `zoomies`) |
-| `snack` · `yoga` · `think` | free time | 12% · 60 s · 28 · 15% · 60 s · 27 · 20% · 30 s · 26 |
+| `snack` · `yoga` · `think` | free time | 12% × appetite × 2 (cat 6%, panda 12%) · 60 s · 28 · 15% · 60 s · 27 · 20% · 30 s · 26 |
 | `sniff` · `bark` | free time | 30% · 25 s · 25 · 10% · 40 s · 24 |
 | `tab-return-wave` | back after 30 s away | 80% · – · 41 (beats `happy`) |
 | `page-change-wave` · `visitor-return-wave` | route change · visitor back | 80% · 2 s · 31 · 60% · – · 31 (beat `look` and `notice`) |

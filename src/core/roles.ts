@@ -30,13 +30,17 @@ export const ROLE_FALLBACKS: Readonly<Record<string, readonly string[]>> = {
   'tool-used': ['success'],
   hide: [],
   hiding: ['hide'],
+  // After eating: the cat lifts its head and licks a paw; pets without it just idle.
+  full: [],
+  // Clicked too many times in a row.
+  upset: ['thrown'],
 };
 
 /** Roles that must not borrow some unrelated animation when missing. */
 export const ROLES_WITHOUT_DEFAULT: ReadonlySet<string> = new Set([
   'poopEntity',
   // Optional extras: the actions that use them only run for pets that have them.
-  'hide', 'broom', 'sniff', 'bark', 'wave', 'think', 'yoga', 'snack', 'full',
+  'hide', 'broom', 'sniff', 'bark', 'wave', 'think', 'yoga', 'snack',
 ]);
 
 /** All animation names that could play for a role, after fallbacks. Empty if none. */

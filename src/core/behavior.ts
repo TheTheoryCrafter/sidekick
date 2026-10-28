@@ -19,7 +19,7 @@ export type Motion = 'none' | 'wander' | 'run' | 'follow' | 'jump';
 export const MOTIONS: readonly Motion[] = ['none', 'wander', 'run', 'follow', 'jump'];
 
 /** Pet traits a rule can scale its chance by. */
-export type TraitName = 'jumpiness' | 'clinginess';
+export type TraitName = 'jumpiness' | 'clinginess' | 'appetite';
 
 export interface ActionStep {
   /** Role to animate (never an animation name). */
@@ -193,8 +193,8 @@ export function normalizeRule(input: unknown): { rule: RuleDef | null; warnings:
   const during = strList(input.during);
   const notDuring = strList(input.notDuring);
   let scaleBy: TraitName | undefined;
-  if (input.scaleBy === 'jumpiness' || input.scaleBy === 'clinginess') scaleBy = input.scaleBy;
-  else if (input.scaleBy !== undefined) warnings.push(`${where}: "scaleBy" must be "jumpiness" or "clinginess"; ignoring it.`);
+  if (input.scaleBy === 'jumpiness' || input.scaleBy === 'clinginess' || input.scaleBy === 'appetite') scaleBy = input.scaleBy;
+  else if (input.scaleBy !== undefined) warnings.push(`${where}: "scaleBy" must be "jumpiness", "clinginess" or "appetite"; ignoring it.`);
   return {
     rule: {
       id: input.id,

@@ -7,6 +7,8 @@ export interface AnimationDef {
     loop: boolean;
     /** A one-shot that stays on its last frame for the rest of a longer step (a collapse, lying down). */
     hold?: boolean;
+    /** A one-shot that leads straight into this animation when it finishes, inside the same step. */
+    next?: string;
     /** First column of the animation (0-based). Defaults to 0. */
     col?: number;
     /**
@@ -26,6 +28,8 @@ export interface Traits {
     jumpiness: number;
     /** 0..1, how much the pet likes to stay near the cursor. */
     clinginess: number;
+    /** 0..1, how often it snacks in its free time. */
+    appetite: number;
 }
 export interface PetManifest {
     id: string;

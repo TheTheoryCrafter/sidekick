@@ -29,6 +29,27 @@ Keep this list current. Add to it whenever a choice is made.
   (bottom centre), `facing` (`"right"`), `hitbox` (the whole frame), `traits` (speed 1,
   jumpiness 0.2, clinginess 0.5), and `sheetSize` (only used to bounds-check animations).
   `traits.jumpiness` and `traits.clinginess` scale the chance of the jump and approach rules (`scaleBy`).
+  `traits.appetite` (default 0.5) scales the free-time `snack` rule. The cream cat snacks too
+  (2026-10-29, asked for at a low chance): `snack` → eat (the bowl), `full` → groom, appetite
+  0.25, so 6% with the 60 s cooldown against the panda's 12%.
+- **Longer eating (2026-10-29).** The user found eating too quick (one 1.9 s pass). New
+  animation field `next` (one-shots only): when it finishes, the named animation plays in
+  the same step instead of the role being re-picked; an untimed step then gives a looping
+  follow-up 3 s. The cat's row-13 strip is split: `eat` (lean in, frames 0–5, next
+  `eat-munch`), `eat-munch` (head in the bowl, 6–12, loops at 7 fps) and `eat-finish`
+  (lift the head, 13–14, next `groom`), with `full` → eat-finish. The `eat` action is now
+  4–6 s and `snack` is 5–8 s plus 2.5–4 s of `full`; other pets re-pick their one-shot
+  eat or sniff to fill the time.
+  - The user then found eating didn't finish: the `eat` action stopped with the head still
+    in the bowl. It now ends with 1.5–2.5 s of `full` too. `full` is no longer optional; it
+    falls back to ambient, so dogs idle a moment after sniffing.
+- **Crying when pestered (2026-10-29).** `src/core/pester.ts` (`recordClick`, pure): 5 clicks
+  or taps within 4 s of sim time make the instance emit `pestered`, then counting starts
+  afresh. Every click, tap and dblclick counts as one press: the second of a quick pair
+  arrives as `dblclick` only, so skipping it halved the count. Rule `pestered` → `cry` (role `upset`,
+  3.5–5 s) at priority 88, above click (80) and dblclick (85), so further clicks can't
+  interrupt it; 10 s cooldown. `upset` falls back to `thrown`: the cat and panda map it to
+  `cry`, dogs snarl (attack).
 - Behavior refers only to **roles**, never to animation names. `ROLE_FALLBACKS` in
   `src/core/roles.ts` defines the fallback chain for each role. Every chain ends in `ambient`
   and then the first animation, except roles in `ROLES_WITHOUT_DEFAULT` (`poopEntity`). A pet
@@ -151,7 +172,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.5"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.6"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.

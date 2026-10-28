@@ -39,12 +39,13 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
   { id: 'jump', steps: [{ role: 'jump', motion: 'jump' }, { role: 'ambient', duration: [2000, 5000] }] },
   // The pile appears when the step ends (the "poop" emit), behind the pet.
   { id: 'poop', role: 'poop', emit: 'poop', interruptible: false },
-  { id: 'eat', role: 'tool-used' },
+  { id: 'eat', steps: [{ role: 'tool-used', duration: [4000, 6000] }, { role: 'full', duration: [1500, 2500] }] },
   { id: 'celebrate', role: 'success', duration: 2500 },
   { id: 'faint', role: 'error', duration: 4000 },
 
   // Reactions to the visitor.
   { id: 'startle', role: 'click', duration: 1000 },
+  { id: 'cry', role: 'upset', duration: [3500, 5000] },
   { id: 'happy', role: 'dblclick', duration: 2000 },
   { id: 'shy', role: 'hover' },
   { id: 'notice', role: 'near', face: 'cursor' },
@@ -63,7 +64,7 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
   { id: 'wave', role: 'wave', face: 'cursor' },
   { id: 'think', role: 'think', duration: [4000, 7000] },
   { id: 'yoga', steps: [{ role: 'yoga', duration: [2000, 3000] }, { role: 'yoga', duration: [2000, 3000] }, { role: 'yoga', duration: [2000, 3000] }] },
-  { id: 'snack', steps: [{ role: 'snack' }, { role: 'full', duration: [2000, 3500] }] },
+  { id: 'snack', steps: [{ role: 'snack', duration: [5000, 8000] }, { role: 'full', duration: [2500, 4000] }] },
 ];
 
 export const DEFAULT_RULES: RuleInput[] = [
@@ -77,7 +78,7 @@ export const DEFAULT_RULES: RuleInput[] = [
   // there is room for another, and nothing clickable is under the spot.
   { id: 'poop', on: 'idle', if: 'poop-spot', chance: 0.05, cooldown: 90_000, priority: 33, action: 'poop' },
   { id: 'hide', on: 'idle', chance: 0.05, cooldown: 120_000, priority: 30, action: 'hide' },
-  { id: 'snack', on: 'idle', chance: 0.12, cooldown: 60_000, priority: 28, action: 'snack' },
+  { id: 'snack', on: 'idle', chance: 0.12, scaleBy: 'appetite', cooldown: 60_000, priority: 28, action: 'snack' },
   { id: 'yoga', on: 'idle', chance: 0.15, cooldown: 60_000, priority: 27, action: 'yoga' },
   { id: 'think', on: 'idle', chance: 0.2, cooldown: 30_000, priority: 26, action: 'think' },
   { id: 'sniff', on: 'idle', chance: 0.3, cooldown: 25_000, priority: 25, action: 'sniff' },
@@ -88,6 +89,8 @@ export const DEFAULT_RULES: RuleInput[] = [
   // The visitor. Clicks beat everything except landing; hover and near are gentle.
   { id: 'land-after-throw', on: 'land', if: 'thrown', priority: 95, action: 'grumble' },
   { id: 'land', on: 'land', priority: 90, action: 'land' },
+  // Too many clicks in a row: it cries, and more clicks (80) can't cut that short.
+  { id: 'pestered', on: 'pestered', priority: 88, cooldown: 10_000, action: 'cry' },
   { id: 'dblclick', on: 'dblclick', priority: 85, action: 'happy' },
   { id: 'click', on: 'click', priority: 80, cooldown: 300, action: 'startle' },
   { id: 'tap', on: 'tap', priority: 80, cooldown: 300, action: 'startle' },

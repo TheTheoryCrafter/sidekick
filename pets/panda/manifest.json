@@ -157,7 +157,8 @@
       "yoga-3"
     ],
     "snack": "eat",
-    "full": "so-full"
+    "full": "so-full",
+    "upset": "cry"
   },
   "traits": {
     "speed": 1,

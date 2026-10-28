@@ -11,6 +11,8 @@ export interface AnimationDef {
   loop: boolean;
   /** A one-shot that stays on its last frame for the rest of a longer step (a collapse, lying down). */
   hold?: boolean;
+  /** A one-shot that leads straight into this animation when it finishes, inside the same step. */
+  next?: string;
   /** First column of the animation (0-based). Defaults to 0. */
   col?: number;
   /**
@@ -32,6 +34,8 @@ export interface Traits {
   jumpiness: number;
   /** 0..1, how much the pet likes to stay near the cursor. */
   clinginess: number;
+  /** 0..1, how often it snacks in its free time. */
+  appetite: number;
 }
 
 export interface PetManifest {
@@ -61,7 +65,7 @@ export interface ValidationResult {
   warnings: string[];
 }
 
-export const DEFAULT_TRAITS: Traits = { speed: 1, jumpiness: 0.2, clinginess: 0.5 };
+export const DEFAULT_TRAITS: Traits = { speed: 1, jumpiness: 0.2, clinginess: 0.5, appetite: 0.5 };
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -124,9 +128,16 @@ export function validateManifest(input: unknown): ValidationResult {
       fps: raw.fps,
       loop: raw.loop !== false,
       ...(raw.hold === true && raw.loop === false ? { hold: true } : {}),
+      ...(typeof raw.next === 'string' && raw.loop === false ? { next: raw.next } : {}),
       ...(raw.size !== undefined ? { size: [w, h] as [number, number] } : {}),
       ...(typeof raw.label === 'string' ? { label: raw.label } : {}),
     };
+  }
+  for (const [name, a] of Object.entries(animations)) {
+    if (a.next !== undefined && !(a.next in animations)) {
+      warnings.push(`Animation "${name}": "next" refers to unknown animation "${a.next}"; ignoring it.`);
+      delete a.next;
+    }
   }
   if (Object.keys(animations).length === 0) {
     errors.push('No usable animations.');
@@ -178,6 +189,7 @@ export function validateManifest(input: unknown): ValidationResult {
     if (typeof t.speed === 'number' && t.speed > 0) traits.speed = t.speed;
     if (typeof t.jumpiness === 'number') traits.jumpiness = clamp01(t.jumpiness);
     if (typeof t.clinginess === 'number') traits.clinginess = clamp01(t.clinginess);
+    if (typeof t.appetite === 'number') traits.appetite = clamp01(t.appetite);
   }
 
   let scale = 1;
