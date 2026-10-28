@@ -461,7 +461,10 @@ export function stepBrain(prev: BrainState, ctx: BrainCtx): BrainResult {
       const px = run.speed * ctx.dt;
       if (Math.abs(dx) <= px) {
         s = { ...s, body: { ...s.body, x: target } };
-        done = true;
+        // A timed wander or run keeps going: pick the next spot until time is up.
+        const again = run.deadline !== null && step.motion !== 'follow' ? stepTarget(step, s, ctx) : null;
+        if (again === null) done = true;
+        else s = { ...s, action: { ...run, targetX: again }, body: { ...s.body, facing: again > s.body.x ? 1 : -1 } };
       } else {
         const dir = dx > 0 ? 1 : -1;
         s = { ...s, body: { ...s.body, x: s.body.x + dir * px, facing: dir } };

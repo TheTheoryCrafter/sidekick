@@ -101,13 +101,18 @@ Keep this list current. Add to it whenever a choice is made.
 - The brain returns **effects** (`action-start`, `action-end`, `emit`, `event`), which the
   instance forwards to `on(listener)` listeners. Up to 10 events emitted before the pet
   loads are queued.
+- **Free-time actions last a while** (the user found them switching too fast): walk wanders
+  for 4–10 s, jump is followed by 2–5 s of ambient on the landing spot, hide plays `hide`
+  then the new role `hiding` (fallback hide; cream cat box-idle/box-idle-2) for 3–6 s, and
+  zoomies ends with 2–4 s of ambient. A `wander`/`run` step with a `duration` keeps picking
+  new spots until it runs out; without one it still ends on arrival.
 - The role `tired` is new, with fallback → ambient. Sleep plays `tired`, then `sleep`, and
   the cream cat maps `tired` to `yawn`.
 - `setTimeScale(1–60)` is a debug aid that speeds up sim time, motion included.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.0"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.1"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.
@@ -272,7 +277,7 @@ Keep this list current. Add to it whenever a choice is made.
   stage, so there is still one Shadow DOM layer.
 - **Lifetime.** Clicking a pile removes it with a 200 ms opacity fade (a CSSOM transition)
   and emits `poop-cleaned`.
-  - The `poop` option is `true`, `false` or `{ max = 5, ttl = 10 min }`.
+  - The `poop` option is `true`, `false` or `{ max = 5, ttl = 15 s }` (ttl was 10 min until the user asked for 15 s).
   - `ttl` counts sim time, so piles don't expire while the tab is hidden.
   - Beyond `max`, the oldest pile goes. `clearPoops()` removes them all.
 

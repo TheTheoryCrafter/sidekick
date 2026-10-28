@@ -33,14 +33,14 @@ The built files in `dist/` are committed, so no build runs on install. Pin a tag
 
 ```json
 "dependencies": {
-  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.0"
+  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.1"
 }
 ```
 
 **As a script tag** (served by jsDelivr straight from GitHub):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.0/dist/sidekick.js" data-menu defer></script>
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.1/dist/sidekick.js" data-menu defer></script>
 ```
 
 The script finds its pets in the `pets/` folder next to itself, so there is nothing else
@@ -68,7 +68,7 @@ outlives your page routes. A second `init()` returns the same pet.
 ### Plain HTML, WordPress, Webflow
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.0/dist/sidekick.js"
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.1/dist/sidekick.js"
         data-menu data-scale="2" defer></script>
 ```
 
@@ -282,7 +282,7 @@ in parentheses).
 | `petUrls` | `{}` | `{ id: folderUrl }` for pets kept elsewhere. |
 | `scale` (`data-scale`) | `2` | Whole-number size, 1–8. Always pixel-crisp. |
 | `surfaces` (`data-surfaces`) | headings, paragraphs, images, buttons, list items, landmarks… | CSS selector for elements the pet may stand on, or `false` (`"false"`) to keep it on the floor. |
-| `poop` (`data-poop`, `data-poop-max`, `data-poop-ttl`) | `true` | `false`, or `{ max: 5, ttl: 600000 }` (at most 5 at once; each gone after 10 min of activity). |
+| `poop` (`data-poop`, `data-poop-max`, `data-poop-ttl`) | `true` | `false`, or `{ max: 5, ttl: 15000 }` (at most 5 at once; each gone after 15 s of activity). |
 | `enabled` (`data-enabled`) | `true` | Whether it starts switched on. **The visitor's saved choice wins.** |
 | `persist` (`data-persist`) | `true` | Remember on/off, pet and position in `localStorage`. |
 | `storageKey` (`data-storage-key`) | `"sidekick:v1"` | localStorage key. |
@@ -446,7 +446,7 @@ chain, and every chain ends at `ambient`, then the first animation:
 | `dragged` · `fall` | held, falling | hover, then click · dragged |
 | `landing` · `jump` · `thrown` | landing, jumping, after a throw | ambient · landing · click |
 | `success` · `error` · `tool-used` | site events | ambient · click · success |
-| `hide` | peeking from a box | ambient |
+| `hide` · `hiding` | peeking from a box, staying in it | ambient · hide |
 | `poop` | squatting | ambient |
 | `poopEntity` | the pile left behind | **none**: a pet without it never poops |
 
@@ -488,7 +488,7 @@ pet.registerAction({ id: "stare", role: "near", face: "cursor", duration: 3000 }
 | --- | --- |
 | `role` | Required. |
 | `motion` | `"none"`, `"wander"` (walk nearby), `"run"` (dash far), `"follow"` (walk to the cursor) or `"jump"` (onto a nearby element, or down). |
-| `duration` | ms or `[min, max]`. Without it, a moving step ends on arrival, a one-shot animation ends when it finishes, and a looping one plays for 3 s. |
+| `duration` | ms or `[min, max]`. With it, a `wander` or `run` step keeps picking new spots until the time is up. Without it, a moving step ends on arrival, a one-shot animation ends when it finishes, and a looping one plays for 3 s. |
 | `speed` | Speed multiplier for the motion. |
 | `face` | `"cursor"` or `"away"`. |
 | `emit` | A name sent to `on()` listeners when the step ends. |
@@ -542,7 +542,8 @@ pet.registerRule({ id: "zoomies", on: "idle", action: "zoomies", chance: 0.01, c
 
 **Free time** (the `idle` event, highest priority first): sleep at night or when sleepy
 (after 3 minutes awake) · zoomies · jump onto something nearby · poop (only where nothing
-clickable is underneath) · hide in a box · walk · sit.
+clickable is underneath) · hide in a box · walk · sit. Each lasts a few seconds, so the pet
+doesn't flit from one to the next.
 
 All defaults are exported as data, as `DEFAULT_ACTIONS` and `DEFAULT_RULES`, from
 `sidekick-pet`.
@@ -550,12 +551,12 @@ All defaults are exported as data, as `DEFAULT_ACTIONS` and `DEFAULT_RULES`, fro
 | Action | Steps |
 | --- | --- |
 | `sit` | ambient for 3–8 s |
-| `walk` | move, wander |
-| `zoomies` | run, run, ambient for 1.5 s |
+| `walk` | move, wandering for 4–10 s |
+| `zoomies` | run, run, ambient for 2–4 s |
 | `sleep` | tired, then sleep for 20–45 s |
-| `jump` | jump onto something in reach |
+| `jump` | jump onto something in reach, then ambient for 2–5 s |
 | `poop` | poop, then the pile appears behind the pet |
-| `hide` | hide |
+| `hide` | hide, then hiding for 3–6 s |
 | `eat` · `celebrate` · `faint` | tool-used · success for 2.5 s · error for 4 s |
 | `startle` · `happy` · `shy` | click for 1 s · dblclick for 2 s · hover |
 | `notice` · `approach` · `look` | near, facing the cursor · follow, then near · near |

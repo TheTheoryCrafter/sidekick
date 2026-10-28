@@ -34,6 +34,7 @@ describe('expirePoops', () => {
 
 describe('normalizePoopOptions', () => {
   it('defaults, overrides, and turns off', () => {
+    expect(DEFAULT_POOP).toEqual({ max: 5, ttl: 15_000 });
     expect(normalizePoopOptions(undefined)).toEqual(DEFAULT_POOP);
     expect(normalizePoopOptions(true)).toEqual(DEFAULT_POOP);
     expect(normalizePoopOptions({ max: 2, ttl: 60_000 })).toEqual({ max: 2, ttl: 60_000 });

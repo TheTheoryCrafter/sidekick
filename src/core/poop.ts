@@ -8,7 +8,7 @@ export interface PoopOptions {
   ttl: number;
 }
 
-export const DEFAULT_POOP: PoopOptions = { max: 5, ttl: 10 * 60_000 };
+export const DEFAULT_POOP: PoopOptions = { max: 5, ttl: 15_000 };
 
 export interface Poop<A = unknown> {
   id: number;

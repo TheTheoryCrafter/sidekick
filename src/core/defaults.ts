@@ -7,13 +7,15 @@ export const SLEEPY_AFTER_MS = 3 * 60_000;
 
 export const DEFAULT_ACTIONS: ActionInput[] = [
   { id: 'sit', role: 'ambient', duration: [3000, 8000] },
-  { id: 'walk', role: 'move', motion: 'wander' },
+  // Free-time actions last a while, so the pet doesn't flit from one to the next.
+  // A timed walk keeps picking new spots until its time is up.
+  { id: 'walk', role: 'move', motion: 'wander', duration: [4000, 10_000] },
   {
     id: 'zoomies',
     steps: [
       { role: 'zoomies', motion: 'run' },
       { role: 'zoomies', motion: 'run' },
-      { role: 'ambient', duration: 1500 },
+      { role: 'ambient', duration: [2000, 4000] },
     ],
   },
   {
@@ -23,8 +25,9 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
       { role: 'sleep', duration: [20_000, 45_000] },
     ],
   },
-  { id: 'hide', role: 'hide' },
-  { id: 'jump', role: 'jump', motion: 'jump' },
+  { id: 'hide', steps: [{ role: 'hide' }, { role: 'hiding', duration: [3000, 6000] }] },
+  // After landing, stay on the element for a moment before doing anything else.
+  { id: 'jump', steps: [{ role: 'jump', motion: 'jump' }, { role: 'ambient', duration: [2000, 5000] }] },
   // The pile appears when the step ends (the "poop" emit), behind the pet.
   { id: 'poop', role: 'poop', emit: 'poop', interruptible: false },
   { id: 'eat', role: 'tool-used' },

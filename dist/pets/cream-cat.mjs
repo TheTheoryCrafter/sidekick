@@ -231,6 +231,10 @@ const A = "cream-cat", f = "Cream cat", v = "cream-cat-sheet-v2.png", P = [
   success: "dance",
   "tool-used": "eat",
   hide: "box-peek",
+  hiding: [
+    "box-idle",
+    "box-idle-2"
+  ],
   zoomies: "run",
   poopEntity: "poop-pile",
   landing: "jump"

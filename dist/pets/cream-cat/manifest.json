@@ -235,6 +235,7 @@
     "success": "dance",
     "tool-used": "eat",
     "hide": "box-peek",
+    "hiding": ["box-idle", "box-idle-2"],
     "zoomies": "run",
     "poopEntity": "poop-pile",
     "landing": "jump"

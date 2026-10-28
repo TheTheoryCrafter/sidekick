@@ -241,6 +241,21 @@ describe('running actions', () => {
     expect(r.state.action?.id).not.toBe('walk');
   });
 
+  it('a timed wander keeps picking new spots until its time is up', () => {
+    const b = behaviorWith((b) => b.addAction({ id: 'stroll', role: 'move', motion: 'wander', duration: 8000 }));
+    const ctx = makeCtx(b, { rng: seededRng(3) });
+    const p = play(idleState(500), 'stroll', ctx);
+    const first = p.state.action!.targetX!;
+    let legs = 1, last = first, s = p.state, now = 0;
+    for (; now < 7900; now += 1000 / 60) {
+      s = stepBrain(s, { ...ctx, now, dt: 1 / 60 }).state;
+      expect(s.action?.id).toBe('stroll');
+      if (s.action!.targetX !== last) { legs++; last = s.action!.targetX!; }
+    }
+    expect(legs).toBeGreaterThan(1);
+    expect(run(s, { ...ctx, now }, 300).state.action?.id).not.toBe('stroll');
+  });
+
   it('run goes far and fast', () => {
     const b = behaviorWith((b) => b.addAction({ id: 'dash', role: 'zoomies', motion: 'run' }));
     const p = play(idleState(100), 'dash', makeCtx(b, { rng: scripted(0.5) }));
@@ -531,6 +546,18 @@ describe('default behavior with the cream cat', () => {
     expect(p.anim).toBe('poop');
     const r = run(p, ctx, 1600); // poop: 6 frames at 4 fps
     expect(r.effects).toContainEqual({ type: 'emit', name: 'poop', action: 'poop' });
+  });
+
+  it('free-time walks, jumps and hiding last a while', () => {
+    const cat = validateManifest(creamCat).manifest!;
+    const ctx = makeCtx(defaultBehavior(), { manifest: cat });
+    const walk = play(createBrain(500, ctx), 'walk', ctx).state;
+    expect(walk.action!.deadline).toBeGreaterThanOrEqual(4000);
+    const hide = play(createBrain(500, ctx), 'hide', ctx).state;
+    expect(hide.anim).toBe('box-peek');
+    const hidden = run(hide, ctx, 1600).state; // box-peek: 12 frames at 8 fps
+    expect(hidden.action?.id).toBe('hide');
+    expect(['box-idle', 'box-idle-2']).toContain(hidden.anim);
   });
 
   it('naps when the visitor goes quiet and wakes when they come back', () => {

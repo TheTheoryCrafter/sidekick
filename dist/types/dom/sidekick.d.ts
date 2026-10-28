@@ -35,7 +35,7 @@ export interface SidekickOptions {
     surfaces?: string | false;
     /**
      * Whether the pet poops now and then, or limits: at most `max` poops at once
-     * (default 5), each gone after `ttl` ms of activity (default 10 minutes).
+     * (default 5), each gone after `ttl` ms of activity (default 15 seconds).
      * Clicking a poop clears it. Default true.
      */
     poop?: boolean | {

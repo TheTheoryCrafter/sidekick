@@ -30,5 +30,5 @@ $('clear').onclick = () => pet.clearPoops();
 setInterval(() => {
   const d = pet.debug();
   const piles = document.querySelector('sidekick-pet')?.shadowRoot?.querySelectorAll('div > div[style*="transition"]').length ?? 0;
-  $('status').textContent = `${d.mode ?? '-'} · ${d.action ?? '-'} · anim ${d.anim ?? '-'} · piles on page: ${piles} · lifetime ${ttl ? `${ttl / 1000}s` : '10 min'}`;
+  $('status').textContent = `${d.mode ?? '-'} · ${d.action ?? '-'} · anim ${d.anim ?? '-'} · piles on page: ${piles} · lifetime ${ttl ? `${ttl / 1000}s` : '15s'}`;
 }, 200);

@@ -29,6 +29,7 @@ export const ROLE_FALLBACKS: Readonly<Record<string, readonly string[]>> = {
   error: ['click'],
   'tool-used': ['success'],
   hide: [],
+  hiding: ['hide'],
 };
 
 /** Roles that must not borrow some unrelated animation when missing. */

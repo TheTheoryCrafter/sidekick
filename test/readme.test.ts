@@ -31,7 +31,7 @@ const readmeManifest = {
 export function readmeApiExamples(pet: Sidekick, controls: SidekickControls): void {
   const options: SidekickOptions = {
     pet: 'cream-cat', pets: ['cream-cat'], petsBaseUrl: '/pets/', petUrls: { other: '/x/' }, scale: 2,
-    surfaces: false, poop: { max: 5, ttl: 600000 }, enabled: true, persist: true, storageKey: 'sidekick:v1',
+    surfaces: false, poop: { max: 5, ttl: 15000 }, enabled: true, persist: true, storageKey: 'sidekick:v1',
     menu: true, restoreButton: 'bottom-left', idleAfter: 60000, motion: 'auto', seed: 1,
   };
   void options;
