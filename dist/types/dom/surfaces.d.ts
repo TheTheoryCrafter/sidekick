@@ -1,10 +1,15 @@
 import type { Surface } from '../core/surfaces';
 /** Elements that make good things to stand on. Hosts can add [data-sidekick-surface]. */
 export declare const DEFAULT_SURFACE_SELECTOR: string;
+/**
+ * Text and links whose box is invisible: the pet would stand on thin air above the words.
+ * They count only when drawn as a box (see drawsABox) or opted in with data-sidekick-surface.
+ */
+export declare const NEEDS_A_BOX: ReadonlySet<string>;
 /** Alpha of a computed CSS colour ("rgb(…)", "rgba(…)", "transparent"); 1 if unsure. */
 export declare function colorAlpha(color: string): number;
-/** A link drawn as a button: its own visible fill, background image or top border. */
-export declare function looksLikeButton(style: Pick<CSSStyleDeclaration, 'backgroundColor' | 'backgroundImage' | 'borderTopWidth' | 'borderTopStyle' | 'borderTopColor'>): boolean;
+/** Drawn as a box: its own visible fill, background image or top border (a button-style link, a callout). */
+export declare function drawsABox(style: Pick<CSSStyleDeclaration, 'backgroundColor' | 'backgroundImage' | 'borderTopWidth' | 'borderTopStyle' | 'borderTopColor'>): boolean;
 export declare const SCAN: {
     /** Rediscover elements this often, ms (route changes, lazy content). */
     readonly rediscoverMs: 2000;
@@ -47,7 +52,7 @@ export declare class SurfaceScanner {
     /** Fresh measurement of one surface (the one the pet stands on), or null if it's gone. */
     measureOne(id: number): Surface | null;
     private discover;
-    private linkIsButton;
+    private isBoxed;
     private measure;
 }
 export {};

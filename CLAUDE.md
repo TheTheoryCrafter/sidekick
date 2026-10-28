@@ -151,7 +151,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.4"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.5"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.
@@ -358,11 +358,15 @@ Keep this list current. Add to it whenever a choice is made.
     `[role=button]` and `[data-sidekick-surface]`. Plain `div`s are not included, so cards
     count only through their contents unless they opt in.
   - **Links styled as buttons (2026-10-29).** `a` is in the selector, but discovery keeps a
-    link only if `looksLikeButton` (its own fill over 5% alpha, a background image, or a
+    link only if `drawsABox` (its own fill over 5% alpha, a background image, or a
     visible top border), or it has `role=button`/`data-sidekick-surface`. theorycrafter's
     buttons are mostly links ("Dive into the Abyss", the category tiles), so the cat never
     stood on them. The user asked for only this change; the full-width text boxes and
     invisible `section` edges were left as they are.
+  - **Plain text is not a ledge (2026-10-29).** The user asked for it after seeing the cat
+    walk on air beside centred headings. `NEEDS_A_BOX` (a, h1–h6, p, li, dt, dd, blockquote,
+    pre) applies the same `drawsABox` check (renamed from `looksLikeButton`) to text.
+    `section`, `header` and other containers are unchanged, as asked.
 - **The `surfaces` option** takes a selector string, or `false` to keep the pet on the floor.
   `debugSurfaces()` is a demo aid.
 - **Measured:** the M4 demo runs with at most 6 ms frames while jumping constantly.

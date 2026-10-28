@@ -10,9 +10,17 @@ export const DEFAULT_SURFACE_SELECTOR = [
   'button', 'input', 'textarea', 'select', 'pre', 'blockquote', 'table', 'figure', 'hr',
   'li', 'dt', 'dd', 'form', 'fieldset', 'nav', 'header', 'footer', 'aside', 'article',
   'section', '[role="button"]', '[data-sidekick-surface]',
-  // Links count only when they look like buttons (see looksLikeButton).
+  // Links count only when they look like buttons (see drawsABox).
   'a',
 ].join(',');
+
+/**
+ * Text and links whose box is invisible: the pet would stand on thin air above the words.
+ * They count only when drawn as a box (see drawsABox) or opted in with data-sidekick-surface.
+ */
+export const NEEDS_A_BOX: ReadonlySet<string> = new Set([
+  'A', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'DT', 'DD', 'BLOCKQUOTE', 'PRE',
+]);
 
 /** Alpha of a computed CSS colour ("rgb(…)", "rgba(…)", "transparent"); 1 if unsure. */
 export function colorAlpha(color: string): number {
@@ -25,8 +33,8 @@ export function colorAlpha(color: string): number {
   return a.endsWith('%') ? parseFloat(a) / 100 : parseFloat(a);
 }
 
-/** A link drawn as a button: its own visible fill, background image or top border. */
-export function looksLikeButton(style: Pick<CSSStyleDeclaration, 'backgroundColor' | 'backgroundImage' | 'borderTopWidth' | 'borderTopStyle' | 'borderTopColor'>): boolean {
+/** Drawn as a box: its own visible fill, background image or top border (a button-style link, a callout). */
+export function drawsABox(style: Pick<CSSStyleDeclaration, 'backgroundColor' | 'backgroundImage' | 'borderTopWidth' | 'borderTopStyle' | 'borderTopColor'>): boolean {
   if (colorAlpha(style.backgroundColor) > 0.05) return true;
   if (style.backgroundImage && style.backgroundImage !== 'none') return true;
   const border = parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== 'none' && style.borderTopStyle !== 'hidden';
@@ -138,7 +146,7 @@ export class SurfaceScanner {
     }
     this.elements = found
       .filter((el) => !this.host.contains(el) && !el.closest('[data-sidekick-ignore]'))
-      .filter((el) => el.tagName !== 'A' || el.matches('[data-sidekick-surface],[role="button"]') || this.linkIsButton(el))
+      .filter((el) => !NEEDS_A_BOX.has(el.tagName) || el.matches('[data-sidekick-surface],[role="button"]') || this.isBoxed(el))
       .slice(0, SCAN.maxCandidates);
     this.byId.clear();
     for (const el of this.elements) {
@@ -151,9 +159,9 @@ export class SurfaceScanner {
     }
   }
 
-  private linkIsButton(el: Element): boolean {
+  private isBoxed(el: Element): boolean {
     try {
-      return looksLikeButton(this.win.getComputedStyle(el));
+      return drawsABox(this.win.getComputedStyle(el));
     } catch {
       return false;
     }

@@ -105,7 +105,7 @@ function Lt(n, t, e, i, s = !0) {
   }
   return { pos: { x: a, y: c }, vel: { x: o, y: r }, landed: null };
 }
-function zt(n, t) {
+function Ct(n, t) {
   const e = n.filter((l) => t - l.t <= S.throwWindowMs);
   if (e.length < 2) return { x: 0, y: 0 };
   const i = e[0], s = e[e.length - 1], o = (s.t - i.t) / 1e3;
@@ -114,7 +114,7 @@ function zt(n, t) {
   const c = Math.hypot(r, a);
   return c > S.maxThrow && (r *= S.maxThrow / c, a *= S.maxThrow / c), { x: r, y: a };
 }
-const Ct = {
+const Rt = {
   ambient: [],
   move: [],
   zoomies: ["move"],
@@ -157,7 +157,7 @@ function ft(n, t) {
     e.add(a);
     const c = n.roles[a];
     if (c !== void 0) return Array.isArray(c) ? [...c] : [c];
-    i.push(...(r = Ct[a]) != null ? r : []);
+    i.push(...(r = Rt[a]) != null ? r : []);
   }
   if (ut.has(t)) return [];
   const s = n.roles.ambient;
@@ -169,10 +169,10 @@ function H(n, t, e = Math.random) {
   const i = ft(n, t);
   return i.length === 0 ? null : i[Math.min(i.length - 1, Math.floor(e() * i.length))];
 }
-function Rt(n, t) {
+function zt(n, t) {
   return n.roles[t] !== void 0;
 }
-function F(n, t, e) {
+function _(n, t, e) {
   var r, a;
   const [i, s] = (r = t.size) != null ? r : n.frameSize, o = Math.max(0, Math.min(t.frames - 1, Math.floor(e)));
   return { x: (((a = t.col) != null ? a : 0) + o) * i, y: t.row * n.frameSize[1], w: i, h: s };
@@ -181,7 +181,7 @@ function K(n, t) {
   const e = Math.max(0, t), i = Math.floor(e * n.fps / 1e3);
   return n.loop ? { frame: i % n.frames, done: !1 } : { frame: Math.min(i, n.frames - 1), done: i >= n.frames };
 }
-const _ = {
+const F = {
   /** Highest jump, in pet heights. */
   maxUp: 4,
   /** Furthest jump sideways, in pet widths. */
@@ -197,7 +197,7 @@ function Ot(n, t, e, i) {
   return s;
 }
 function Xt(n, t, e, i, s) {
-  const o = i.petH * _.maxUp, r = i.petW * _.maxSide, a = [];
+  const o = i.petH * F.maxUp, r = i.petW * F.maxSide, a = [];
   for (const c of e) {
     if (c.id === t || c.top < i.minY || c.top > i.floorY - 4 || n.y - c.top > o) continue;
     const l = Math.min(i.petW / 2, (c.right - c.left) / 2), h = Math.max(c.left + l, i.minX), d = Math.min(c.right - l, i.maxX);
@@ -268,7 +268,7 @@ function Dt(n, t, e) {
   const i = (s = n.steps[0]) == null ? void 0 : s.motion;
   return i === "follow" ? G(t, e) !== null : i === "jump" ? mt(t, { ...e, rng: () => 0.5 }) !== null : !0;
 }
-function Nt(n, t) {
+function Bt(n, t) {
   var e;
   return {
     body: { x: T(n, t.minX, t.maxX), y: t.floorY, facing: t.rng() < 0.5 ? -1 : 1 },
@@ -285,7 +285,7 @@ function Nt(n, t) {
     nextTick: t.now + M.tickMs
   };
 }
-function Bt(n, t, e) {
+function Nt(n, t, e) {
   var i, s;
   return {
     now: t.now,
@@ -300,7 +300,7 @@ function Bt(n, t, e) {
 function Yt(n, t, e, i) {
   var a;
   if (n.mode !== "ground") return null;
-  const s = n.action, o = s ? e.behavior.actions.get(s.id) : void 0, r = Bt(n, e, i);
+  const s = n.action, o = s ? e.behavior.actions.get(s.id) : void 0, r = Nt(n, e, i);
   for (const c of e.behavior.rulesFor(t)) {
     const l = e.behavior.actions.get(c.action);
     if (!l || ((a = n.cooldowns[c.id]) != null ? a : -1 / 0) > e.now || c.during && !(s && c.during.includes(s.id)) || c.notDuring && s && c.notDuring.includes(s.id) || s && ((o == null ? void 0 : o.interruptible) === !1 || c.priority < s.priority) || !c.if.every((d) => {
@@ -313,7 +313,7 @@ function Yt(n, t, e, i) {
   }
   return null;
 }
-function C(n, t, e) {
+function R(n, t, e) {
   const i = H(e.manifest, t, e.rng);
   return i ? { ...n, anim: i, animStart: e.now } : n;
 }
@@ -332,13 +332,13 @@ function gt(n, t, e) {
 }
 function yt(n, t, e, i) {
   var f, m, w, b;
-  const s = t.steps[e], o = C(n, s.role, i);
+  const s = t.steps[e], o = R(n, s.role, i);
   if (i.calm && ((f = s.motion) != null ? f : "none") !== "none")
     return { ...o, action: { ...o.action, step: e, stepStart: i.now, deadline: i.now, targetX: null, speed: 0 } };
   if (s.motion === "jump") {
     const g = mt(n, i), u = { ...o.action, step: e, stepStart: i.now, deadline: null, targetX: (m = g == null ? void 0 : g.x) != null ? m : null, speed: 0 };
     if (!g) return { ...o, action: { ...u, deadline: i.now } };
-    const p = jt({ x: n.body.x, y: n.body.y }, g, i.petH * _.apexRise, S.gravity, i.minY), v = Math.abs(g.x - n.body.x) > 1 ? g.x > n.body.x ? 1 : -1 : n.body.facing;
+    const p = jt({ x: n.body.x, y: n.body.y }, g, i.petH * F.apexRise, S.gravity, i.minY), v = Math.abs(g.x - n.body.x) > 1 ? g.x > n.body.x ? 1 : -1 : n.body.facing;
     return { ...o, action: u, mode: "air", on: null, vel: p, jumping: !0, thrown: !1, body: { ...o.body, facing: v } };
   }
   const r = ((w = s.motion) != null ? w : "none") !== "none", a = gt(s, n, i), c = r ? i.walkSpeed * ((b = s.speed) != null ? b : s.motion === "run" ? M.runSpeed : 1) : 0, l = i.manifest.animations[o.anim];
@@ -385,18 +385,18 @@ function vt(n, t, e, i) {
   const r = t.next ? e.behavior.actions.get(t.next) : void 0;
   return r ? j(n, r, s.priority, s.rule, e, i) : I(n, "idle", e, i);
 }
-function Ft(n, t, e, i) {
+function _t(n, t, e, i) {
   const s = [];
   return { state: I(n, t, e, s, i), effects: s };
 }
-function _t(n, t, e, i = 0) {
+function Ft(n, t, e, i = 0) {
   const s = [], o = e.behavior.actions.get(t);
   return !o || n.mode !== "ground" ? { state: n, effects: s } : { state: j(n, o, i, null, e, s), effects: s };
 }
 function Ut(n, t) {
   const e = [];
   let i = bt(n, e);
-  return i = C({ ...i, mode: "held", on: null, vel: { x: 0, y: 0 }, thrown: !1, jumping: !1 }, "dragged", t), e.push({ type: "event", name: "drag-start", rule: null }), { state: i, effects: e };
+  return i = R({ ...i, mode: "held", on: null, vel: { x: 0, y: 0 }, thrown: !1, jumping: !1 }, "dragged", t), e.push({ type: "event", name: "drag-start", rule: null }), { state: i, effects: e };
 }
 function Wt(n, t, e, i) {
   if (n.mode !== "held") return n;
@@ -407,11 +407,11 @@ function Ht(n, t, e) {
   const i = [];
   if (n.mode !== "held") return { state: n, effects: i };
   const s = Math.hypot(t.x, t.y) >= M.throwSpeed;
-  return i.push({ type: "event", name: s ? "throw" : "drop", rule: null, payload: { vx: Math.round(t.x), vy: Math.round(t.y) } }), { state: C({ ...n, mode: "air", vel: t, thrown: s, jumping: !1 }, "fall", e), effects: i };
+  return i.push({ type: "event", name: s ? "throw" : "drop", rule: null, payload: { vx: Math.round(t.x), vy: Math.round(t.y) } }), { state: R({ ...n, mode: "air", vel: t, thrown: s, jumping: !1 }, "fall", e), effects: i };
 }
 function Kt(n, t, e) {
   const i = bt(n, e), s = n.on === null ? null : { id: n.on, until: t.now + M.skipLandMs };
-  return C({ ...i, mode: "air", on: null, vel: { x: 0, y: 0 }, thrown: !1, jumping: !1, skipLand: s }, "fall", t);
+  return R({ ...i, mode: "air", on: null, vel: { x: 0, y: 0 }, thrown: !1, jumping: !1, skipLand: s }, "fall", t);
 }
 function Vt(n, t, e) {
   var w;
@@ -471,7 +471,7 @@ function Gt(n, t) {
     }
   }
   const c = t.manifest.animations[i.anim], l = !!c && !c.loop && K(c, t.now - i.animStart).done;
-  return !a && l && (s.deadline === null && s.targetX === null ? a = !0 : c.hold || (i = C(i, r.role, t))), a ? { state: vt(i, o, t, e), effects: e } : { state: i, effects: e };
+  return !a && l && (s.deadline === null && s.targetX === null ? a = !0 : c.hold || (i = R(i, r.role, t))), a ? { state: vt(i, o, t, e), effects: e } : { state: i, effects: e };
 }
 const qt = 3 * 6e4, Jt = [
   { id: "sit", role: "ambient", duration: [3e3, 8e3] },
@@ -602,7 +602,7 @@ function nt(n) {
   n.sheetSize !== void 0 && (X(n.sheetSize, O) ? c = n.sheetSize : e.push('"sheetSize" is not [width, height]; ignoring it.'));
   const l = {};
   for (const [u, p] of Object.entries(n.animations)) {
-    const v = (R) => e.push(`Animation "${u}" dropped: ${R}.`);
+    const v = (z) => e.push(`Animation "${u}" dropped: ${z}.`);
     if (!$(p)) {
       v("not an object");
       continue;
@@ -915,7 +915,7 @@ class be {
     const e = this.press;
     if (!(!e || t.pointerId !== e.id)) {
       if (this.dragging)
-        this.h.release(zt(this.samples, t.timeStamp));
+        this.h.release(Ct(this.samples, t.timeStamp));
       else if (!this.pressOpenedMenu && t.timeStamp - e.t <= P.clickMs) {
         const i = t.timeStamp - this.lastClick.t <= P.doubleMs && this.lastClick.type === e.type;
         this.lastClick = i ? { t: -1 / 0, type: "" } : { t: t.timeStamp, type: e.type }, this.h.click(i ? "dblclick" : e.type === "touch" ? "tap" : "click");
@@ -1020,7 +1020,7 @@ class ve {
       f.width = `${o * e}px`, f.height = `${r * e}px`, f.backgroundSize = `${this.sheet.width * e}px ${this.sheet.height * e}px`, f.transform = `translate3d(${l(d.x - a * e)}px,${l(d.y - c * e)}px,0)`;
       const { frame: m } = K(s, t - h.poop.born), w = `${m}:${e}`;
       if (w !== h.frameKey) {
-        const b = F(this.manifest, s, m);
+        const b = _(this.manifest, s, m);
         f.backgroundPosition = `${-b.x * e}px ${-b.y * e}px`;
         const [g, u, p, v] = this.box, x = h.hit.style;
         x.left = `${g * e}px`, x.top = `${u * e}px`, x.width = `${p * e}px`, x.height = `${v * e}px`, h.frameKey = w;
@@ -1090,7 +1090,7 @@ class ve {
         s.drawImage(e, 0, 0);
         let [o, r, a, c] = [1 / 0, 1 / 0, -1, -1];
         for (let l = 0; l < t.frames; l++) {
-          const h = F(this.manifest, t, l), d = s.getImageData(h.x, h.y, h.w, h.h).data;
+          const h = _(this.manifest, t, l), d = s.getImageData(h.x, h.y, h.w, h.h).data;
           for (let f = 0; f < h.h; f++) for (let m = 0; m < h.w; m++)
             d[(f * h.w + m) * 4 + 3] > 0 && (o = Math.min(o, m), r = Math.min(r, f), a = Math.max(a, m), c = Math.max(c, f));
         }
@@ -1176,15 +1176,15 @@ class D {
     w !== this.last.size && (m.width = `${l * i}px`, m.height = `${h * i}px`, m.backgroundSize = `${this.sheet.width * i}px ${this.sheet.height * i}px`, this.last.size = w, this.last.frameKey = "");
     const { frame: b } = K(e, t.elapsed), g = `${t.anim}:${b}`;
     if (g !== this.last.frameKey) {
-      const E = F(this.manifest, e, b);
+      const E = _(this.manifest, e, b);
       m.backgroundPosition = `${-E.x * i}px ${-E.y * i}px`, this.last.frameKey = g;
     }
     const u = t.facing === 1 != (this.manifest.facing === "right"), p = u ? o - a : a, v = s(t.x - p * i), x = s(t.y - c * i), y = `translate3d(${s(v - d * i)}px,${s(x - f * i)}px,0)${u ? " scaleX(-1)" : ""}`;
     y !== this.last.transform && (m.transform = y, this.last.transform = y);
-    const [k, R, B, q] = this.manifest.hitbox, J = v + (u ? o - k - B : k) * i, Q = `${J},${x + R * i},${B * i},${q * i}`;
+    const [k, z, N, q] = this.manifest.hitbox, J = v + (u ? o - k - N : k) * i, Q = `${J},${x + z * i},${N * i},${q * i}`;
     if (Q !== this.last.hit) {
       const E = this.hit.style;
-      E.width = `${B * i}px`, E.height = `${q * i}px`, E.transform = `translate3d(${J}px,${x + R * i}px,0)`, this.last.hit = Q;
+      E.width = `${N * i}px`, E.height = `${q * i}px`, E.transform = `translate3d(${J}px,${x + z * i}px,0)`, this.last.hit = Q;
     }
     t.cursor !== this.last.cursor && (this.hit.style.cursor = t.cursor, this.last.cursor = t.cursor);
   }
@@ -1260,9 +1260,23 @@ const $e = [
   "section",
   '[role="button"]',
   "[data-sidekick-surface]",
-  // Links count only when they look like buttons (see looksLikeButton).
+  // Links count only when they look like buttons (see drawsABox).
   "a"
-].join(",");
+].join(","), Ie = /* @__PURE__ */ new Set([
+  "A",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5",
+  "H6",
+  "P",
+  "LI",
+  "DT",
+  "DD",
+  "BLOCKQUOTE",
+  "PRE"
+]);
 function lt(n) {
   if (n === "transparent") return 0;
   const t = /^rgba?\(([^)]*)\)$/.exec(n.trim());
@@ -1272,7 +1286,7 @@ function lt(n) {
   const i = e[3];
   return i.endsWith("%") ? parseFloat(i) / 100 : parseFloat(i);
 }
-function Ie(n) {
+function Pe(n) {
   return lt(n.backgroundColor) > 0.05 || n.backgroundImage && n.backgroundImage !== "none" ? !0 : parseFloat(n.borderTopWidth) > 0 && n.borderTopStyle !== "none" && n.borderTopStyle !== "hidden" && lt(n.borderTopColor) > 0.05;
 }
 const L = {
@@ -1287,7 +1301,7 @@ const L = {
   /** Keep at most this many candidates. */
   maxCandidates: 400
 };
-class Pe {
+class Le {
   constructor(t, e, i) {
     this.win = t, this.selector = e, this.host = i, this.elements = [], this.ids = /* @__PURE__ */ new WeakMap(), this.byId = /* @__PURE__ */ new Map(), this.nextId = 1, this.cache = [], this.discoveredAt = -1 / 0, this.measuredAt = -1 / 0, this.dirty = !0, this.changed = !1, this.cleanups = [];
     const s = () => {
@@ -1336,15 +1350,15 @@ class Pe {
     } catch {
       e = [];
     }
-    this.elements = e.filter((i) => !this.host.contains(i) && !i.closest("[data-sidekick-ignore]")).filter((i) => i.tagName !== "A" || i.matches('[data-sidekick-surface],[role="button"]') || this.linkIsButton(i)).slice(0, L.maxCandidates), this.byId.clear();
+    this.elements = e.filter((i) => !this.host.contains(i) && !i.closest("[data-sidekick-ignore]")).filter((i) => !Ie.has(i.tagName) || i.matches('[data-sidekick-surface],[role="button"]') || this.isBoxed(i)).slice(0, L.maxCandidates), this.byId.clear();
     for (const i of this.elements) {
       let s = this.ids.get(i);
       s === void 0 && (s = this.nextId++, this.ids.set(i, s)), this.byId.set(s, i);
     }
   }
-  linkIsButton(t) {
+  isBoxed(t) {
     try {
-      return Ie(this.win.getComputedStyle(t));
+      return Pe(this.win.getComputedStyle(t));
     } catch {
       return !1;
     }
@@ -1356,7 +1370,7 @@ class Pe {
       const a = r.getBoundingClientRect();
       if (a.height < 4 || a.top < t.minTop || a.top > s - 4) continue;
       const c = Math.max(0, a.left), l = Math.min(i, a.right);
-      l - c < t.minWidth || Le(r) && ze(e, r, c, l, a.top, this.host) && o.push({ id: this.ids.get(r), left: c, right: l, top: a.top });
+      l - c < t.minWidth || Ce(r) && Re(e, r, c, l, a.top, this.host) && o.push({ id: this.ids.get(r), left: c, right: l, top: a.top });
     }
     return o.sort((r, a) => r.top - a.top || r.left - a.left), o.filter((r, a) => {
       const c = o[a - 1];
@@ -1364,11 +1378,11 @@ class Pe {
     });
   }
 }
-function Le(n) {
+function Ce(n) {
   const t = n.checkVisibility;
   return t ? t.call(n, { opacityProperty: !0, visibilityProperty: !0 }) : !0;
 }
-function ze(n, t, e, i, s, o) {
+function Re(n, t, e, i, s, o) {
   const r = s + 1;
   for (const a of [e + (i - e) * 0.25, e + (i - e) * 0.75]) {
     const c = n.elementFromPoint(a, r);
@@ -1376,11 +1390,11 @@ function ze(n, t, e, i, s, o) {
   }
   return !1;
 }
-const Ce = 30, Re = 2.5, Oe = 1.4, Xe = 10, A = "[sidekick]", z = Symbol.for("sidekick"), N = "sidekick:instance", ht = (n) => {
+const ze = 30, Oe = 2.5, Xe = 1.4, je = 10, A = "[sidekick]", C = Symbol.for("sidekick"), B = "sidekick:instance", ht = (n) => {
   const t = Math.round(Number(n));
   return Number.isFinite(t) ? Math.min(8, Math.max(1, t)) : 2;
 };
-class je {
+class De {
   constructor(t, e = {}) {
     var a, c, l, h, d, f, m, w, b;
     this.win = t, this.petDefs = /* @__PURE__ */ new Map(), this.calm = !1, this.behavior = te(), this.menu = null, this.restore = null, this.m = null, this.generation = 0, this.petCache = /* @__PURE__ */ new Map(), this.state = null, this.simTime = 0, this.timeScale = 1, this.status = "loading", this.listeners = /* @__PURE__ */ new Set(), this.settingsListeners = /* @__PURE__ */ new Set(), this.pending = [], this.cursor = null, this.cursorNear = !1, this.grabOffset = { x: 0, y: 0 }, this.globalCleanups = [];
@@ -1439,10 +1453,10 @@ class je {
   emit(t, e) {
     if (!(typeof t != "string" || !t || !this.settings.enabled)) {
       if (!this.state || !this.m) {
-        this.pending.length < Xe && this.pending.push([t, e]);
+        this.pending.length < je && this.pending.push([t, e]);
         return;
       }
-      this.apply(Ft(this.state, t, this.ctx(0), e));
+      this.apply(_t(this.state, t, this.ctx(0), e));
     }
   }
   /**
@@ -1450,7 +1464,7 @@ class je {
    * (default 0) can still interrupt it.
    */
   play(t, e = 0) {
-    this.state && this.m && this.apply(_t(this.state, t, this.ctx(0), e));
+    this.state && this.m && this.apply(Ft(this.state, t, this.ctx(0), e));
   }
   /** Add or replace an action. Returns warnings (empty when all is well). */
   registerAction(t) {
@@ -1524,7 +1538,7 @@ class je {
     if (this.status === "destroyed") return;
     this.save(), this.unmount(), this.status = "destroyed", this.globalCleanups.forEach((o) => o()), this.globalCleanups = [], this.store.destroy(), (e = this.menu) == null || e.close(), (i = this.restore) == null || i.remove(), (s = this.host) == null || s.remove(), this.host = null, this.listeners.clear(), this.settingsListeners.clear();
     const t = this.win;
-    t[z] === this && (delete t[z], this.win.dispatchEvent(new Event(N)));
+    t[C] === this && (delete t[C], this.win.dispatchEvent(new Event(B)));
   }
   // ---- Mounting -----------------------------------------------------------
   async mount() {
@@ -1541,7 +1555,7 @@ class je {
       return;
     }
     if (t !== this.generation || !this.host || !this.settings.enabled || this.settings.pet !== e) return;
-    const { manifest: s, sheet: o } = i, r = this.win, a = r.document, c = new D(a, this.host.stage, s, o), l = this.opts.surfaces ? new Pe(r, this.opts.surfaces, this.host.el) : null, h = H(s, "poopEntity", () => 0), d = this.poopOpts && h ? new ve(r, this.host.stage, c.el, this.host.el, s, o, h, this.poopOpts, () => this.emit("poop-cleaned")) : null, f = new be(r, c.hit, {
+    const { manifest: s, sheet: o } = i, r = this.win, a = r.document, c = new D(a, this.host.stage, s, o), l = this.opts.surfaces ? new Le(r, this.opts.surfaces, this.host.el) : null, h = H(s, "poopEntity", () => 0), d = this.poopOpts && h ? new ve(r, this.host.stage, c.el, this.host.el, s, o, h, this.poopOpts, () => this.emit("poop-cleaned")) : null, f = new be(r, c.hit, {
       hover: () => this.emit("hover"),
       click: (y) => this.emit(y),
       cursor: (y) => {
@@ -1562,7 +1576,7 @@ class je {
     };
     a.addEventListener("visibilitychange", g), b.push(() => a.removeEventListener("visibilitychange", g)), this.m = { manifest: s, view: c, input: f, loop: w, sensors: m, scanner: l, poops: d, cleanups: b };
     const u = this.ctx(0), p = this.settings.x === void 0 ? u.minX + this.rng() * (u.maxX - u.minX) : this.settings.x * a.documentElement.clientWidth;
-    this.state = Nt(p, u), this.syncVisibility();
+    this.state = Bt(p, u), this.syncVisibility();
     const v = this.pending;
     this.pending = [], v.forEach(([y, k]) => this.emit(y, k));
   }
@@ -1654,7 +1668,7 @@ class je {
     const t = [], e = (r = (o = this.m.poops) == null ? void 0 : o.count) != null ? r : 0;
     ((a = this.state.action) == null ? void 0 : a.id) !== "sleep" ? t.push({ label: "Take a nap", onSelect: () => this.play("sleep", 50) }) : t.push({ label: "Wake up", onSelect: () => this.play("sit", 60) }), e > 0 && t.push({ label: `Clean up (${e})`, onSelect: () => this.clearPoops() });
     for (const c of this.opts.pets)
-      c !== this.settings.pet && t.push({ label: `Switch to ${De(c)}`, onSelect: () => void this.setPet(c) });
+      c !== this.settings.pet && t.push({ label: `Switch to ${Be(c)}`, onSelect: () => void this.setPet(c) });
     t.push({ label: "Hide pet", onSelect: () => this.disable() });
     const i = this.pixelSize(), [, s] = this.m.manifest.frameSize;
     this.menu.open(t, this.state.body.x, this.state.body.y - s * i);
@@ -1682,12 +1696,12 @@ class je {
       floorY: s.clientHeight,
       petW: e.frameSize[0] * i,
       petH: e.frameSize[1] * i,
-      walkSpeed: Ce * i * e.traits.speed,
+      walkSpeed: ze * i * e.traits.speed,
       hour: (/* @__PURE__ */ new Date()).getHours(),
       cursor: this.cursor,
       surfaces: this.surfaces(r, e.hitbox[2] * i),
       // A pet with no walk of its own (the panda) stays put, like reduced motion.
-      calm: this.calm || !Rt(e, "move")
+      calm: this.calm || !zt(e, "move")
     };
   }
   /** Surfaces for the brain, with the one underfoot measured fresh so the pet rides scrolling exactly. */
@@ -1714,8 +1728,8 @@ class je {
       this.cursorNear = !1;
       return;
     }
-    const e = this.pixelSize(), [i, s] = this.m.manifest.frameSize, o = Math.hypot(this.cursor.x - t.body.x, this.cursor.y - (t.body.y - s * e / 2)), r = i * e * Re;
-    !this.cursorNear && o < r ? (this.cursorNear = !0, this.emit("near")) : this.cursorNear && o > r * Oe && (this.cursorNear = !1);
+    const e = this.pixelSize(), [i, s] = this.m.manifest.frameSize, o = Math.hypot(this.cursor.x - t.body.x, this.cursor.y - (t.body.y - s * e / 2)), r = i * e * Oe;
+    !this.cursorNear && o < r ? (this.cursorNear = !0, this.emit("near")) : this.cursorNear && o > r * Xe && (this.cursorNear = !1);
   }
   /** Where the next poop would go, in viewport px. */
   nextPoopSpot() {
@@ -1768,36 +1782,36 @@ class je {
 function dt(n) {
   return n.endsWith("/") ? n : `${n}/`;
 }
-function De(n) {
+function Be(n) {
   const t = n.replace(/-/g, " ");
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
-function Be(n = {}) {
+function Ye(n = {}) {
   if (typeof window == "undefined" || typeof document == "undefined") return null;
-  const t = window, e = t[z];
+  const t = window, e = t[C];
   if (e) return e;
-  const i = new je(window, n);
-  return t[z] = i, window.dispatchEvent(new Event(N)), i;
+  const i = new De(window, n);
+  return t[C] = i, window.dispatchEvent(new Event(B)), i;
 }
 function Ne() {
   var n;
-  return typeof window == "undefined" ? null : (n = window[z]) != null ? n : null;
+  return typeof window == "undefined" ? null : (n = window[C]) != null ? n : null;
 }
-function Ye() {
+function _e() {
   var n;
   (n = Ne()) == null || n.destroy();
 }
 function Fe(n) {
   return typeof window == "undefined" ? () => {
-  } : (window.addEventListener(N, n), () => window.removeEventListener(N, n));
+  } : (window.addEventListener(B, n), () => window.removeEventListener(B, n));
 }
 export {
   Jt as DEFAULT_ACTIONS,
   Qt as DEFAULT_RULES,
-  je as Sidekick,
-  Ye as destroy,
+  De as Sidekick,
+  _e as destroy,
   Ne as getInstance,
-  Be as init,
+  Ye as init,
   nt as validateManifest,
   Fe as watchInstance
 };
