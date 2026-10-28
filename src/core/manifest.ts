@@ -13,6 +13,12 @@ export interface AnimationDef {
   hold?: boolean;
   /** First column of the animation (0-based). Defaults to 0. */
   col?: number;
+  /**
+   * Frame size for this animation when it differs from `frameSize` (art that needs more room,
+   * like a cat on a broom). The strip starts at `row` × frame height and `col` × this width,
+   * and is drawn with its bottom centre on the pet's anchor.
+   */
+  size?: [number, number];
   label?: string;
 }
 
@@ -97,8 +103,6 @@ export function validateManifest(input: unknown): ValidationResult {
     if (isPair(input.sheetSize, isPosInt)) sheetSize = input.sheetSize;
     else warnings.push('"sheetSize" is not [width, height]; ignoring it.');
   }
-  const cols = sheetSize ? Math.floor(sheetSize[0] / fw) : Infinity;
-  const rows = sheetSize ? Math.floor(sheetSize[1] / fh) : Infinity;
 
   const animations: Record<string, AnimationDef> = {};
   for (const [name, raw] of Object.entries(input.animations as Record<string, unknown>)) {
@@ -109,8 +113,10 @@ export function validateManifest(input: unknown): ValidationResult {
     if (!isNonNegInt(col)) { bad('"col" must be a whole number ≥ 0'); continue; }
     if (!isPosInt(raw.frames)) { bad('"frames" must be a whole number ≥ 1'); continue; }
     if (typeof raw.fps !== 'number' || !(raw.fps > 0)) { bad('"fps" must be > 0'); continue; }
-    if (raw.row >= rows) { bad(`row ${raw.row} is outside the ${rows}-row sheet`); continue; }
-    if (col + raw.frames > cols) { bad(`frames run past the ${cols}-column sheet`); continue; }
+    if (raw.size !== undefined && !isPair(raw.size, isPosInt)) { bad('"size" must be [width, height] in whole pixels'); continue; }
+    const [w, h] = (raw.size as [number, number] | undefined) ?? frameSize;
+    if (sheetSize && raw.row * fh + h > sheetSize[1]) { bad(`row ${raw.row} is outside the ${sheetSize[1]} px tall sheet`); continue; }
+    if (sheetSize && (col + raw.frames) * w > sheetSize[0]) { bad(`frames run past the ${sheetSize[0]} px wide sheet`); continue; }
     animations[name] = {
       row: raw.row,
       col,
@@ -118,6 +124,7 @@ export function validateManifest(input: unknown): ValidationResult {
       fps: raw.fps,
       loop: raw.loop !== false,
       ...(raw.hold === true && raw.loop === false ? { hold: true } : {}),
+      ...(raw.size !== undefined ? { size: [w, h] as [number, number] } : {}),
       ...(typeof raw.label === 'string' ? { label: raw.label } : {}),
     };
   }

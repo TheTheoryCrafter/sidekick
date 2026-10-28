@@ -6,9 +6,9 @@ export interface FrameRect { x: number; y: number; w: number; h: number }
 
 /** Where frame `index` of `anim` sits on the sheet, in sheet pixels. */
 export function frameRect(manifest: PetManifest, anim: AnimationDef, index: number): FrameRect {
-  const [w, h] = manifest.frameSize;
+  const [w, h] = anim.size ?? manifest.frameSize;
   const i = Math.max(0, Math.min(anim.frames - 1, Math.floor(index)));
-  return { x: ((anim.col ?? 0) + i) * w, y: anim.row * h, w, h };
+  return { x: ((anim.col ?? 0) + i) * w, y: anim.row * manifest.frameSize[1], w, h };
 }
 
 export interface FrameState {

@@ -38,13 +38,13 @@ describe('bundled pets', () => {
   });
 
   it('each pet has its own extras', () => {
-    expect(extrasOf(load('cream-cat'))).toEqual(['hide', 'poopEntity']);
+    expect(extrasOf(load('cream-cat'))).toEqual(['broom', 'hide', 'poopEntity']);
     for (const d of DOGS) expect(extrasOf(load(d)), d).toEqual(['bark', 'sniff']);
     expect(extrasOf(load('panda'))).toEqual(['full', 'snack', 'think', 'wave', 'yoga']);
   });
 
-  it('64 px pets are scaled down: dogs a little bigger than the 32 px cat, the panda about its size', () => {
-    expect(load('cream-cat').scale).toBe(1);
+  it('pet sizes: the cat one crisp step below scale 2, dogs bigger than it, the panda about its size', () => {
+    expect(load('cream-cat').scale).toBe(0.7);
     for (const id of DOGS) expect(load(id).scale, id).toBe(0.75);
     expect(load('panda').scale).toBe(0.5);
   });
@@ -77,6 +77,18 @@ describe('bundled pets', () => {
     }
     for (const a of ['walk', 'sniff']) expect(started.has(a), a).toBe(true);
     for (const a of ['hide', 'poop', 'think', 'yoga', 'snack']) expect(started.has(a), a).toBe(false);
+  });
+
+  it('broom zoomies: the cat flies fast on its broom; pets without one never try', () => {
+    const cat = load('cream-cat');
+    const ctx = ctxFor(cat, { rng: () => 0.5 });
+    const s = play(createBrain(100, ctx), 'broom-zoomies', ctx).state;
+    expect(s.anim).toBe('broom');
+    expect(s.action!.speed).toBe(240); // walk speed 60 × 4
+    expect(Math.abs(s.action!.targetX! - 100)).toBeGreaterThanOrEqual(400);
+    const rule = ctx.behavior.rulesFor('idle').find((r) => r.id === 'broom-zoomies')!;
+    expect([rule.chance, rule.cooldown, rule.priority]).toEqual([0.05, 120_000, 39]);
+    expect(roleCandidates(load('husky'), 'broom')).toEqual([]);
   });
 
   it('a collapse (hold) stays on its last frame for the rest of the faint', () => {

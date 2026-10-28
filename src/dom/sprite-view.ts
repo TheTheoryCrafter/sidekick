@@ -66,12 +66,16 @@ export class SpriteView {
     const snap = (v: number) => Math.round(v * a.dpr) / a.dpr;
     const [fw, fh] = this.manifest.frameSize;
     const [ax, ay] = this.manifest.anchor;
+    // An animation with its own frame size sits bottom-centred on the usual frame.
+    const [w, h] = def.size ?? this.manifest.frameSize;
+    const ox = (w - fw) / 2;
+    const oy = h - fh;
     const s = this.el.style;
 
-    const size = `${px}`;
+    const size = `${px}:${w}x${h}`;
     if (size !== this.last.size) {
-      s.width = `${fw * px}px`;
-      s.height = `${fh * px}px`;
+      s.width = `${w * px}px`;
+      s.height = `${h * px}px`;
       s.backgroundSize = `${this.sheet.width * px}px ${this.sheet.height * px}px`;
       this.last.size = size;
       this.last.frameKey = '';
@@ -87,9 +91,10 @@ export class SpriteView {
 
     const mirrored = (a.facing === 1) !== (this.manifest.facing === 'right');
     const anchorX = mirrored ? fw - ax : ax;
+    // The usual frame's top-left; the hitbox is always placed against it.
     const left = snap(a.x - anchorX * px);
     const top = snap(a.y - ay * px);
-    const transform = `translate3d(${left}px,${top}px,0)${mirrored ? ' scaleX(-1)' : ''}`;
+    const transform = `translate3d(${snap(left - ox * px)}px,${snap(top - oy * px)}px,0)${mirrored ? ' scaleX(-1)' : ''}`;
     if (transform !== this.last.transform) {
       s.transform = transform;
       this.last.transform = transform;

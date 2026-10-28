@@ -2,7 +2,7 @@
 import { init } from '../src/index';
 
 const PETS = ['cream-cat', 'dalmatian', 'husky', 'labrador', 'rottweiler', 'golden-retriever', 'panda'];
-const ACTIONS = ['sit', 'walk', 'sniff', 'bark', 'think', 'yoga', 'snack', 'wave', 'jump', 'hide', 'sleep', 'eat', 'celebrate', 'faint', 'startle', 'happy', 'grumble'];
+const ACTIONS = ['sit', 'walk', 'zoomies', 'broom-zoomies', 'sniff', 'bark', 'think', 'yoga', 'snack', 'wave', 'jump', 'hide', 'sleep', 'eat', 'celebrate', 'faint', 'startle', 'happy', 'grumble'];
 const $ = (id: string) => document.getElementById(id)!;
 const pet = init({ pets: PETS, menu: true, persist: false, idleAfter: 30_000 })!;
 

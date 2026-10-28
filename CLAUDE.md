@@ -50,6 +50,21 @@ Keep this list current. Add to it whenever a choice is made.
   rounded to whole device pixels. Dogs use 0.75 so they are a bit bigger than the cat; the
   panda uses 0.5 (about the cat's height). At 0.5 the dogs were too small at a 1.25 DPR
   (scale 2 × 0.5 rounds to 1 device px).
+- **Cream cat `scale` 0.7 (2026-10-29).** The user asked for a slightly smaller cat and chose
+  the next crisp size down over a ~15% shrink with uneven pixels. At the default scale 2 it
+  drops one device pixel per art pixel: 1× screens 2 → 1, 1.25× 3 → 2, 1.5× 3 → 2, 2× 4 → 3.
+  Any value from 0.625 to just under 0.75 gives those steps.
+- **Per-animation `size: [w, h]`** for art bigger than `frameSize`. The strip starts at
+  y = `row` × frame height and x = `col` × w, and is drawn bottom-centred on the usual frame;
+  the hitbox stays the usual frame's. Bounds are checked in sheet pixels.
+  - The cream cat's `broom` (6 frames, 48×64, row 30, sheet now 512×1024) came from a
+    witch-hat variant sheet the user pasted (2026-10-29). Its frames sit 48 px apart with the
+    art bottom at y 495; they were mirrored on the way in because that sheet faces left. The
+    hat cat is plainer than the striped cream cat.
+  - **Broom zoomies:** optional role `broom`; action `broom-zoomies` (two `run` steps at
+    speed 4, a third faster than normal zoomies, then 2–4 s ambient); free-time rule at 5%,
+    120 s cooldown, priority 39, just under `zoomies` (6%, 90 s, 40). It flies at floor
+    level, since the art bobs inside its own frame.
 - **`hold: true`** on a one-shot animation keeps its last frame for the rest of a longer step
   instead of re-picking the role (a collapse that would otherwise replay).
 - **Optional roles** (in `ROLES_WITHOUT_DEFAULT`, no fallback): poopEntity, hide, sniff, bark,
@@ -136,7 +151,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.2"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.3"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.

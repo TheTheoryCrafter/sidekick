@@ -33,14 +33,14 @@ The built files in `dist/` are committed, so no build runs on install. Pin a tag
 
 ```json
 "dependencies": {
-  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.2"
+  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.3"
 }
 ```
 
 **As a script tag** (served by jsDelivr straight from GitHub):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.2/dist/sidekick.js" data-menu defer></script>
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.3/dist/sidekick.js" data-menu defer></script>
 ```
 
 The script finds its pets in the `pets/` folder next to itself, so there is nothing else
@@ -50,7 +50,7 @@ to copy.
 
 | id | Pet | Its own extras |
 | --- | --- | --- |
-| `cream-cat` | Cream cat (the default) | hides in a box, poops |
+| `cream-cat` | Cream cat (the default) | hides in a box, flies on a broom, poops |
 | `dalmatian` · `husky` · `labrador` · `rottweiler` · `golden-retriever` | Dogs | sniff around, bark; snarl after a throw, collapse on errors |
 | `panda` | Panda (doesn't walk) | thinks, does yoga, snacks on bamboo, waves at you |
 
@@ -78,7 +78,7 @@ outlives your page routes. A second `init()` returns the same pet.
 ### Plain HTML, WordPress, Webflow
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.2/dist/sidekick.js"
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.3/dist/sidekick.js"
         data-menu data-scale="2" defer></script>
 ```
 
@@ -434,7 +434,7 @@ The sheet is a grid of equal frames. Each animation is a run of frames on one ro
 | Field | |
 | --- | --- |
 | `id`, `sheet`, `frameSize`, `animations` | Required. `id` is a lowercase slug and matches the folder name. |
-| `animations.<name>` | `row` and `frames` are required; `fps`, `loop` (default `true`) and `col` (starting column, default 0) are optional. `hold: true` (with `loop: false`) keeps a one-shot on its last frame for the rest of a longer step, for a collapse or lying down. |
+| `animations.<name>` | `row` and `frames` are required; `fps`, `loop` (default `true`) and `col` (starting column, default 0) are optional. `hold: true` (with `loop: false`) keeps a one-shot on its last frame for the rest of a longer step, for a collapse or lying down. `size: [w, h]` gives one animation bigger frames than `frameSize` (its strip starts at `row` × the frame height and is drawn bottom-centred on the pet). |
 | `scale` | Size relative to the `scale` option (default 1). Art drawn at 64 px per frame can use `0.5` to come out like 32 px art. |
 | `anchor` | The point in a frame that sits on the ground (default: bottom centre). |
 | `facing` | Which way the art faces (`"right"` by default); it's mirrored for the other way. |
@@ -463,7 +463,7 @@ chain, and every chain ends at `ambient`, then the first animation:
 
 **Optional extras.** These roles have no fallback. The actions that use them only run for
 pets that have them, so a pet without one simply never does that:
-`hide` (the box), `sniff`, `bark`, `wave`, `think`, `yoga`, `snack` and `full` (after a snack).
+`hide` (the box), `broom`, `sniff`, `bark`, `wave`, `think`, `yoga`, `snack` and `full` (after a snack).
 
 **A pet that doesn't walk.** Leave out `move`, and the pet stays where it is: free-time
 walks, runs, jumps and cursor-following are skipped, as with reduced motion. It can still be
@@ -570,7 +570,7 @@ pet.registerRule({ id: "zoomies", on: "idle", action: "zoomies", chance: 0.01, c
 ## Default behavior
 
 **Free time** (the `idle` event, highest priority first): sleep at night or when sleepy
-(after 3 minutes awake) · zoomies · jump onto something nearby · poop (only where nothing
+(after 3 minutes awake) · zoomies · broom zoomies · jump onto something nearby · poop (only where nothing
 clickable is underneath) · hide in a box · snack · yoga · think · sniff · bark · walk · sit.
 The extras only run for pets that have them. Each lasts a few seconds, so the pet
 doesn't flit from one to the next.
@@ -583,6 +583,7 @@ All defaults are exported as data, as `DEFAULT_ACTIONS` and `DEFAULT_RULES`, fro
 | `sit` | ambient for 3–8 s |
 | `walk` | move, wandering for 4–10 s |
 | `zoomies` | run, run, ambient for 2–4 s |
+| `broom-zoomies` | broom, flying fast across twice, then ambient for 2–4 s |
 | `sleep` | tired, then sleep for 20–45 s |
 | `jump` | jump onto something in reach, then ambient for 2–5 s |
 | `poop` | poop, then the pile appears behind the pet |
@@ -597,6 +598,7 @@ All defaults are exported as data, as `DEFAULT_ACTIONS` and `DEFAULT_RULES`, fro
 
 | Extra rule | When | Chance · cooldown · priority |
 | --- | --- | --- |
+| `broom-zoomies` | free time | 5% · 120 s · 39 (just under `zoomies`) |
 | `snack` · `yoga` · `think` | free time | 12% · 60 s · 28 · 15% · 60 s · 27 · 20% · 30 s · 26 |
 | `sniff` · `bark` | free time | 30% · 25 s · 25 · 10% · 40 s · 24 |
 | `tab-return-wave` | back after 30 s away | 80% · – · 41 (beats `happy`) |

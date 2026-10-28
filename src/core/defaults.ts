@@ -18,6 +18,15 @@ export const DEFAULT_ACTIONS: ActionInput[] = [
       { role: 'ambient', duration: [2000, 4000] },
     ],
   },
+  // The other kind of zoomies, for pets with a broom: two fast flights across the page.
+  {
+    id: 'broom-zoomies',
+    steps: [
+      { role: 'broom', motion: 'run', speed: 4 },
+      { role: 'broom', motion: 'run', speed: 4 },
+      { role: 'ambient', duration: [2000, 4000] },
+    ],
+  },
   {
     id: 'sleep',
     steps: [
@@ -62,6 +71,7 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'sleep-at-night', on: 'idle', if: ['night', 'sleepy'], chance: 0.6, priority: 51, action: 'sleep' },
   { id: 'sleep-when-sleepy', on: 'idle', if: 'sleepy', chance: 0.3, priority: 50, action: 'sleep' },
   { id: 'zoomies', on: 'idle', chance: 0.06, cooldown: 90_000, priority: 40, action: 'zoomies' },
+  { id: 'broom-zoomies', on: 'idle', chance: 0.05, cooldown: 120_000, priority: 39, action: 'broom-zoomies' },
   { id: 'jump', on: 'idle', chance: 0.5, scaleBy: 'jumpiness', cooldown: 6000, priority: 35, action: 'jump' },
   // "poop-spot" is supplied by the page layer: poop is on, the pet has a pile sprite,
   // there is room for another, and nothing clickable is under the spot.

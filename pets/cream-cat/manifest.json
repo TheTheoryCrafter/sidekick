@@ -8,8 +8,9 @@
   ],
   "sheetSize": [
     512,
-    960
+    1024
   ],
+  "scale": 0.7,
   "anchor": [
     16,
     32
@@ -209,6 +210,15 @@
       "loop": true,
       "label": "The pile it leaves behind",
       "new": true
+    },
+    "broom": {
+      "row": 30,
+      "frames": 6,
+      "fps": 8,
+      "loop": true,
+      "size": [48, 64],
+      "label": "Flying on a broom, in a witch hat",
+      "new": true
     }
   },
   "roles": {
@@ -238,7 +248,8 @@
     "hiding": ["box-idle", "box-idle-2"],
     "zoomies": "run",
     "poopEntity": "poop-pile",
-    "landing": "jump"
+    "landing": "jump",
+    "broom": "broom"
   },
   "traits": {
     "speed": 1.0,
