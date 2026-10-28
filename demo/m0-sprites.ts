@@ -58,7 +58,15 @@ function findBlankFrames(img: HTMLImageElement, m: PetManifest): Map<string, num
 
 async function load(petId: string) {
   const base = `/pets/${petId}/`;
-  const raw = await fetch(`${base}manifest.json`).then((r) => r.json());
+  const url = `${base}manifest.json`;
+  const res = await fetch(url);
+  const text = res.ok ? await res.text() : '';
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    throw new Error(`couldn't read ${url}. Does pets/${petId}/manifest.json exist and contain valid JSON?`);
+  }
   const v = validateManifest(raw);
   const summary = $('summary');
   summary.replaceChildren();
@@ -178,8 +186,11 @@ function setBg() {
 }
 
 const petSelect = $<HTMLSelectElement>('pet');
+// ?pet=<folder> shows any pet in pets/, so a new pet can be checked before it is listed.
+const wanted = new URLSearchParams(location.search).get('pet');
+if (wanted && !PETS.includes(wanted)) PETS.push(wanted);
 PETS.forEach((p) => petSelect.append(el('option', { value: p }, p)));
-petSelect.value = new URLSearchParams(location.search).get('pet') ?? PETS[0]!;
+petSelect.value = wanted ?? PETS[0]!;
 petSelect.onchange = () => load(petSelect.value);
 ['scale', 'flip', 'anchor'].forEach((id) => ($(id).onchange = renderAnims));
 $('bg').onchange = setBg;

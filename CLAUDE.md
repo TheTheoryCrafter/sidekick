@@ -410,6 +410,12 @@ Keep this list current. Add to it whenever a choice is made.
   `Date.now()` or `Math.random()` deep inside `src/core`.
 - No runtime dependencies. The script-tag build must stay at or under 20 kB gzipped (`npm run build` enforces it).
 - Demos may use `<style>` tags. Library code may not.
+- `README.md` is the user-facing reference: setup for each framework, options, API, events,
+  adding a pet, and adding actions and rules. `test/readme.test.ts` typechecks its API
+  examples and validates its example manifest and rules, so **change the README and that
+  test together** whenever the API, options, roles or defaults change.
+- Licence: the code is MIT (`LICENSE`). The cream cat art is third-party, redistributed
+  with permission, and excluded from the MIT grant.
 - Never rewrite text files with Windows PowerShell 5.1 `Get-Content`/`Set-Content`. It reads
   UTF-8 without a BOM as Windows-1252 and writes a BOM, which corrupted CLAUDE.md once. Use
   the editor tools, or Node.
@@ -424,7 +430,7 @@ Keep this list current. Add to it whenever a choice is made.
 - [x] M6 Host events, sensors, persistence, built-in menu
 - [x] M7 Packaging (IIFE, ESM, React), SSR, CSP, size budget, reduced motion
 - [x] M8 Integration guide for theorycrafter (React Router + shadcn profile menu, via Lovable)
-- [ ] M9 README
+- [x] M9 README
 
 ## Open notes
 - cream-cat artwork faces **right**. Checked in the M0 viewer: walk, run and jump all head
