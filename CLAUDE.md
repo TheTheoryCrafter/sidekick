@@ -151,7 +151,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.3"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.4"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.
@@ -357,6 +357,12 @@ Keep this list current. Add to it whenever a choice is made.
   - The default selector covers headings, `p`, media, form controls, `li`, landmarks,
     `[role=button]` and `[data-sidekick-surface]`. Plain `div`s are not included, so cards
     count only through their contents unless they opt in.
+  - **Links styled as buttons (2026-10-29).** `a` is in the selector, but discovery keeps a
+    link only if `looksLikeButton` (its own fill over 5% alpha, a background image, or a
+    visible top border), or it has `role=button`/`data-sidekick-surface`. theorycrafter's
+    buttons are mostly links ("Dive into the Abyss", the category tiles), so the cat never
+    stood on them. The user asked for only this change; the full-width text boxes and
+    invisible `section` edges were left as they are.
 - **The `surfaces` option** takes a selector string, or `false` to keep the pet on the floor.
   `debugSurfaces()` is a demo aid.
 - **Measured:** the M4 demo runs with at most 6 ms frames while jumping constantly.

@@ -33,14 +33,14 @@ The built files in `dist/` are committed, so no build runs on install. Pin a tag
 
 ```json
 "dependencies": {
-  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.3"
+  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.4"
 }
 ```
 
 **As a script tag** (served by jsDelivr straight from GitHub):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.3/dist/sidekick.js" data-menu defer></script>
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.4/dist/sidekick.js" data-menu defer></script>
 ```
 
 The script finds its pets in the `pets/` folder next to itself, so there is nothing else
@@ -78,7 +78,7 @@ outlives your page routes. A second `init()` returns the same pet.
 ### Plain HTML, WordPress, Webflow
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.3/dist/sidekick.js"
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.4/dist/sidekick.js"
         data-menu data-scale="2" defer></script>
 ```
 
@@ -304,7 +304,8 @@ in parentheses).
 
 Mark page areas with **`data-sidekick-ignore`** (never stand there) and
 **`data-sidekick-surface`** (an element the selector doesn't cover, such as a plain card
-`div`).
+`div`). Links count only when they're drawn as buttons: a visible fill, background image or
+top border. A plain text link is never a ledge.
 
 With reduced motion, the pet still animates, reacts and can be dragged. It just never
 walks, runs, follows the cursor or jumps on its own.

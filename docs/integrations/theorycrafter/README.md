@@ -60,7 +60,7 @@ Paste this into Lovable:
 Add the "Sidekick" website pet to the site. Follow these steps exactly and don't change anything else.
 
 1. In package.json "dependencies", add:
-   "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.3"
+   "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.4"
 
 2. Create src/components/WebsitePet.tsx with exactly this content:
 

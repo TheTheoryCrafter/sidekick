@@ -10,7 +10,28 @@ export const DEFAULT_SURFACE_SELECTOR = [
   'button', 'input', 'textarea', 'select', 'pre', 'blockquote', 'table', 'figure', 'hr',
   'li', 'dt', 'dd', 'form', 'fieldset', 'nav', 'header', 'footer', 'aside', 'article',
   'section', '[role="button"]', '[data-sidekick-surface]',
+  // Links count only when they look like buttons (see looksLikeButton).
+  'a',
 ].join(',');
+
+/** Alpha of a computed CSS colour ("rgb(…)", "rgba(…)", "transparent"); 1 if unsure. */
+export function colorAlpha(color: string): number {
+  if (color === 'transparent') return 0;
+  const m = /^rgba?\(([^)]*)\)$/.exec(color.trim());
+  if (!m) return 1;
+  const parts = m[1]!.split(/[\s,/]+/).filter(Boolean);
+  if (parts.length < 4) return 1;
+  const a = parts[3]!;
+  return a.endsWith('%') ? parseFloat(a) / 100 : parseFloat(a);
+}
+
+/** A link drawn as a button: its own visible fill, background image or top border. */
+export function looksLikeButton(style: Pick<CSSStyleDeclaration, 'backgroundColor' | 'backgroundImage' | 'borderTopWidth' | 'borderTopStyle' | 'borderTopColor'>): boolean {
+  if (colorAlpha(style.backgroundColor) > 0.05) return true;
+  if (style.backgroundImage && style.backgroundImage !== 'none') return true;
+  const border = parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== 'none' && style.borderTopStyle !== 'hidden';
+  return border && colorAlpha(style.borderTopColor) > 0.05;
+}
 
 export const SCAN = {
   /** Rediscover elements this often, ms (route changes, lazy content). */
@@ -117,6 +138,7 @@ export class SurfaceScanner {
     }
     this.elements = found
       .filter((el) => !this.host.contains(el) && !el.closest('[data-sidekick-ignore]'))
+      .filter((el) => el.tagName !== 'A' || el.matches('[data-sidekick-surface],[role="button"]') || this.linkIsButton(el))
       .slice(0, SCAN.maxCandidates);
     this.byId.clear();
     for (const el of this.elements) {
@@ -126,6 +148,14 @@ export class SurfaceScanner {
         this.ids.set(el, id);
       }
       this.byId.set(id, el);
+    }
+  }
+
+  private linkIsButton(el: Element): boolean {
+    try {
+      return looksLikeButton(this.win.getComputedStyle(el));
+    } catch {
+      return false;
     }
   }
 
