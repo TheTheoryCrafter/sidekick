@@ -86,6 +86,11 @@ Keep this list current. Add to it whenever a choice is made.
     it in `exports/cream-cat-walk/pixel-picker.html`, which numbers the outline pixels and
     shows the coordinates of a clicked one. Two guesses before that, (14, 15) and (15, 17),
     were wrong and were undone.
+- **Walk frame order reversed (2026-10-29).** The user saw the legs moving the wrong way. The
+  8 walk frames were drawn in reverse: planted feet moved forward 1 px a frame. Row 25 is now
+  stored 7…0 (pixels unchanged), so planted feet move back and steps land ahead. Feet still
+  slide a little (body 3 px a frame at 10 fps against 1 px back); a faster walk fps or slower
+  `traits.speed` would reduce it, but the user hasn't asked for that.
 - **Per-animation `size: [w, h]`** for art bigger than `frameSize`. The strip starts at
   y = `row` × frame height and x = `col` × w, and is drawn bottom-centred on the usual frame;
   the hitbox stays the usual frame's. Bounds are checked in sheet pixels.
@@ -183,7 +188,7 @@ Keep this list current. Add to it whenever a choice is made.
 
 **theorycrafter integration (M8)**
 - **Distribution.** The site installs Sidekick from GitHub, pinned to a tag:
-  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.8"`.
+  `"sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.9"`.
   - `dist/` is committed (no longer git-ignored; marked `-diff linguist-generated`), so
     installs need no build step. Bun, which Lovable appears to use, doesn't run
     dependencies' build scripts, so a `prepare` script would be fragile.
