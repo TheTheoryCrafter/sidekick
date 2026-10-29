@@ -107,6 +107,12 @@ export declare class Sidekick {
     private calm;
     /** Sim times of recent clicks on the pet, to notice pestering. */
     private clickTimes;
+    /** Ledges seen in the last step, the scroll position then, and ledges just revealed. */
+    private seen;
+    private scrollY;
+    private lastScrollDown;
+    private lastReveal;
+    private fresh;
     private rng;
     private behavior;
     private settings;
@@ -195,6 +201,11 @@ export declare class Sidekick {
     /** Surfaces for the brain, with the one underfoot measured fresh so the pet rides scrolling exactly. */
     private surfaces;
     private step;
+    /**
+     * After scrolling down, ledges that came into view are remembered for a moment (a jump then
+     * prefers them) and "scroll-reveal" is emitted, at most once a second.
+     */
+    private noticeReveals;
     /** Emit "near" when the cursor comes close, once per approach. */
     private checkNear;
     /** Where the next poop would go, in viewport px. */

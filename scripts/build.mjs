@@ -15,7 +15,7 @@ import { build } from 'vite';
 const root = resolve(fileURLToPath(import.meta.url), '../..');
 const dist = resolve(root, 'dist');
 /** gzip budget for the script-tag build (pets not included). The .mjs keeps whitespace for consumers' bundlers, so it is only reported. */
-const BUDGET = { 'sidekick.js': 20 * 1024 };
+const BUDGET = { 'sidekick.js': 22 * 1024 };
 
 rmSync(dist, { recursive: true, force: true });
 

@@ -55,9 +55,12 @@ export function landingSurface(prevY: number, y: number, x: number, surfaces: re
   return best;
 }
 
-/** Somewhere new to jump to from (x, y), or null when nothing is in reach. */
+/**
+ * Somewhere new to jump to from (x, y), or null when nothing is in reach. When some of the
+ * reachable surfaces are in `prefer` (ledges that just scrolled into view), one of those wins.
+ */
 export function findJumpTarget(
-  from: Vec, on: number | null, surfaces: readonly Surface[], lim: JumpLimits, rng: Rng,
+  from: Vec, on: number | null, surfaces: readonly Surface[], lim: JumpLimits, rng: Rng, prefer?: readonly number[],
 ): JumpTarget | null {
   const maxUp = lim.petH * JUMP.maxUp;
   const maxSide = lim.petW * JUMP.maxSide;
@@ -86,7 +89,9 @@ export function findJumpTarget(
   }
 
   if (options.length === 0) return null;
-  return options[Math.min(options.length - 1, Math.floor(rng() * options.length))]!;
+  const preferred = prefer && prefer.length ? options.filter((o) => o.id !== null && prefer.includes(o.id)) : [];
+  const pool = preferred.length ? preferred : options;
+  return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))]!;
 }
 
 /** Launch velocity for a ballistic jump from `from` to `to` under `gravity` (px/s²). */

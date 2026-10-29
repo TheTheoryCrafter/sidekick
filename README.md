@@ -11,7 +11,7 @@ then.
 - **Polite.** Pixel-crisp at any whole-number scale. It pauses in hidden tabs, respects
   `prefers-reduced-motion`, and is hidden from screen readers.
 - **CSP-safe.** No eval and no injected `<style>` tags. The script-tag build is about
-  19 kB gzipped.
+  21 kB gzipped.
 - **Works anywhere.** A script tag, an ES module, or a React component. SSR-safe, and only
   ever one pet per page, even if it's set up twice.
 - **Pets and behavior are data.** A new pet is a folder (sprite sheet plus `manifest.json`).
@@ -33,14 +33,14 @@ The built files in `dist/` are committed, so no build runs on install. Pin a tag
 
 ```json
 "dependencies": {
-  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.7"
+  "sidekick-pet": "github:TheTheoryCrafter/sidekick#v0.1.8"
 }
 ```
 
 **As a script tag** (served by jsDelivr straight from GitHub):
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.7/dist/sidekick.js" data-menu defer></script>
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.8/dist/sidekick.js" data-menu defer></script>
 ```
 
 The script finds its pets in the `pets/` folder next to itself, so there is nothing else
@@ -78,7 +78,7 @@ outlives your page routes. A second `init()` returns the same pet.
 ### Plain HTML, WordPress, Webflow
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.7/dist/sidekick.js"
+<script src="https://cdn.jsdelivr.net/gh/TheTheoryCrafter/sidekick@v0.1.8/dist/sidekick.js"
         data-menu data-scale="2" defer></script>
 ```
 
@@ -303,11 +303,23 @@ in parentheses).
 | `seed` | random | Fixes the random sequence (demos, tests). |
 
 Mark page areas with **`data-sidekick-ignore`** (never stand there) and
-**`data-sidekick-surface`** (an element the selector doesn't cover, such as a plain card
-`div`). Text (headings, paragraphs, list items, quotes, code blocks) and links count only when
-they're drawn as a box: a visible fill, background image or top border, like a button-style
-link or a callout. Plain text is never a ledge, so the pet doesn't stand on thin air above the
-words; add `data-sidekick-surface` to opt one in.
+**`data-sidekick-surface`** (always a ledge, whatever it looks like).
+
+What counts as a ledge by default:
+
+- **Media, buttons and form controls:** always.
+- **Cards:** a `div`, `section`, `article`, `header`, `footer`, `nav`, `aside`, `form` or
+  `fieldset` counts when it's drawn as a card: a visible top border, a shadow, or a fill that
+  stands out from what's behind it.
+- **Never backgrounds:** a gradient on its own doesn't count, a box as wide as the page counts
+  only if it has a visible top border line (a divider), and a fixed or absolute box covering
+  much of the screen (an overlay) never counts.
+- **Text and links:** headings, paragraphs, list items, quotes, code blocks and links count
+  only when they're drawn as a box (a fill, background image or top border, like a
+  button-style link), so the pet never stands on thin air above words.
+
+When scrolling down uncovers new ledges, there's a 10% chance (at most every 4 s) that the pet
+jumps onto one of them.
 
 With reduced motion, the pet still animates, reacts and can be dragged. It just never
 walks, runs, follows the cursor or jumps on its own.
@@ -375,6 +387,7 @@ Built-in events, sent by Sidekick itself:
 | `visitor-return` | input again after that | wakes up |
 | `page-change` `{ from, to }` | the URL changed (works with any router) | looks around |
 | `copy` | the visitor copied something | eats it |
+| `scroll-reveal` `{ count }` | scrolling down uncovered new ledges (at most once a second) | jumps onto one of them (10%) |
 | `tab-return` `{ away }` | back to the tab after at least 30 s | happy |
 | `poop-cleaned` | a poop was clicked away | celebrates (sometimes) |
 
@@ -655,7 +668,7 @@ npm run build
   host API, script tag with a strict CSP, React, and every bundled pet.
 - `npm test` runs the unit tests for the pure logic in `src/core/` (behavior, rules,
   physics, surfaces…), plus SSR tests.
-- `npm run build` writes `dist/` and fails if the script-tag build exceeds 20 kB gzipped.
+- `npm run build` writes `dist/` and fails if the script-tag build exceeds 22 kB gzipped.
   **Commit `dist/` with every release.** GitHub installs use it as-is.
 
 Design decisions and their reasons are recorded in [`CLAUDE.md`](CLAUDE.md). The

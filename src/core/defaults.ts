@@ -107,6 +107,8 @@ export const DEFAULT_RULES: RuleInput[] = [
   { id: 'tab-return-wave', on: 'tab-return', priority: 41, chance: 0.8, action: 'wave' },
   { id: 'page-change-wave', on: 'page-change', priority: 31, chance: 0.8, cooldown: 2000, notDuring: ['sleep'], action: 'wave' },
   { id: 'visitor-return-wave', on: 'visitor-return', priority: 31, chance: 0.6, action: 'wave' },
+  // Scrolling down uncovered new ledges: sometimes hop onto one of them.
+  { id: 'scroll-reveal', on: 'scroll-reveal', priority: 36, chance: 0.1, cooldown: 4000, notDuring: ['sleep'], action: 'jump' },
   { id: 'page-change', on: 'page-change', priority: 30, chance: 0.8, cooldown: 2000, notDuring: ['sleep'], action: 'look' },
   { id: 'copy', on: 'copy', priority: 30, cooldown: 5000, notDuring: ['sleep'], action: 'eat' },
 

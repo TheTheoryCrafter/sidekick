@@ -79,6 +79,8 @@ export interface BrainCtx {
     cursor: Vec | null;
     /** Page elements the pet can stand on, in viewport px. */
     surfaces: readonly Surface[];
+    /** Ledges that just scrolled into view; a jump picks one of these when it can. */
+    preferSurfaces?: readonly number[];
     /**
      * Reduced motion: the pet never moves on its own (no walking, running, following
      * or jumping). Animations, reactions and dragging still work.

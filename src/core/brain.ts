@@ -88,6 +88,8 @@ export interface BrainCtx {
   cursor: Vec | null;
   /** Page elements the pet can stand on, in viewport px. */
   surfaces: readonly Surface[];
+  /** Ledges that just scrolled into view; a jump picks one of these when it can. */
+  preferSurfaces?: readonly number[];
   /**
    * Reduced motion: the pet never moves on its own (no walking, running, following
    * or jumping). Animations, reactions and dragging still work.
@@ -160,7 +162,7 @@ function followTarget(s: BrainState, ctx: BrainCtx): number | null {
 
 function jumpTarget(s: BrainState, ctx: BrainCtx) {
   return findJumpTarget({ x: s.body.x, y: s.body.y }, s.on, ctx.surfaces,
-    { petW: ctx.petW, petH: ctx.petH, minY: ctx.minY, floorY: ctx.floorY, minX: ctx.minX, maxX: ctx.maxX }, ctx.rng);
+    { petW: ctx.petW, petH: ctx.petH, minY: ctx.minY, floorY: ctx.floorY, minX: ctx.minX, maxX: ctx.maxX }, ctx.rng, ctx.preferSurfaces);
 }
 
 /** Whether the pet can do this action right now: it has every optional role it uses, and its first motion is possible. */

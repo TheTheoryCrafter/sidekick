@@ -10,6 +10,27 @@ export declare const NEEDS_A_BOX: ReadonlySet<string>;
 export declare function colorAlpha(color: string): number;
 /** Drawn as a box: its own visible fill, background image or top border (a button-style link, a callout). */
 export declare function drawsABox(style: Pick<CSSStyleDeclaration, 'backgroundColor' | 'backgroundImage' | 'borderTopWidth' | 'borderTopStyle' | 'borderTopColor'>): boolean;
+/**
+ * Containers that are often just layout or background: the pet stands on them only when they
+ * look like a card (see looksLikeCard) or opt in with data-sidekick-surface.
+ */
+export declare const NEEDS_A_CARD: ReadonlySet<string>;
+type CardStyle = Pick<CSSStyleDeclaration, 'backgroundColor' | 'borderTopWidth' | 'borderTopStyle' | 'borderTopColor' | 'boxShadow' | 'position' | 'opacity'>;
+/** Parsed rgb of a computed colour, or null. */
+export declare function colorRgb(color: string): [number, number, number] | null;
+/**
+ * A box drawn as a card: a visible top border, a shadow, or a fill that stands out from
+ * what is behind it. Never a background: gradients alone don't count, a box as wide as the
+ * page counts only with a visible top border line, and a fixed or absolute box covering much
+ * of the screen (an overlay) never does.
+ */
+export declare function looksLikeCard(style: CardStyle, box: {
+    width: number;
+    height: number;
+    viewportWidth: number;
+    viewportHeight: number;
+    behind: string;
+}): boolean;
 export declare const SCAN: {
     /** Rediscover elements this often, ms (route changes, lazy content). */
     readonly rediscoverMs: 2000;
@@ -53,6 +74,9 @@ export declare class SurfaceScanner {
     measureOne(id: number): Surface | null;
     private discover;
     private isBoxed;
+    private isCard;
+    /** The nearest mostly opaque background colour behind an element, from its ancestors. */
+    private colourBehind;
     private measure;
 }
 export {};

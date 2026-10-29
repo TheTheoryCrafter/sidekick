@@ -27,6 +27,12 @@ import { DEFAULT_STORAGE_KEY, SettingsStore } from './storage';
 import { DEFAULT_SURFACE_SELECTOR, SurfaceScanner } from './surfaces';
 
 /**
+ * Scrolling down reveals ledges: ones that appear within `afterScrollMs` of scrolling down
+ * count; tell the rules at most every `everyMs`, and prefer them for `preferMs`.
+ */
+const REVEAL = { afterScrollMs: 2000, everyMs: 1000, preferMs: 2500 } as const;
+
+/**
  * A pet given as data instead of a folder URL, e.g. the bundled
  * `import creamCat from "sidekick-pet/pets/cream-cat"`.
  */
@@ -174,6 +180,12 @@ export class Sidekick {
   private calm = false;
   /** Sim times of recent clicks on the pet, to notice pestering. */
   private clickTimes: number[] = [];
+  /** Ledges seen in the last step, the scroll position then, and ledges just revealed. */
+  private seen = new Set<number>();
+  private scrollY = 0;
+  private lastScrollDown = -Infinity;
+  private lastReveal = -Infinity;
+  private fresh: { ids: number[]; until: number } | null = null;
   private rng: Rng;
   private behavior: Behavior = defaultBehavior();
   private settings: Settings;
@@ -675,6 +687,7 @@ export class Sidekick {
       surfaces: this.surfaces(minY, m.hitbox[2] * px),
       // A pet with no walk of its own (the panda) stays put, like reduced motion.
       calm: this.calm || !hasOwnRole(m, 'move'),
+      ...(this.fresh && this.fresh.until > this.simTime ? { preferSurfaces: this.fresh.ids } : {}),
     };
   }
 
@@ -694,10 +707,32 @@ export class Sidekick {
     if (!this.state || !this.m) return;
     const dt = dtMs * this.timeScale;
     this.simTime += dt;
-    this.apply(stepBrain(this.state, this.ctx(dt)));
+    const ctx = this.ctx(dt);
+    this.noticeReveals(ctx.surfaces);
+    this.apply(stepBrain(this.state!, this.fresh && this.fresh.until > this.simTime ? { ...ctx, preferSurfaces: this.fresh.ids } : ctx));
     this.checkNear();
     this.m?.sensors.tick();
     this.m?.poops?.expire(this.simTime);
+  }
+
+  /**
+   * After scrolling down, ledges that came into view are remembered for a moment (a jump then
+   * prefers them) and "scroll-reveal" is emitted, at most once a second.
+   */
+  private noticeReveals(list: readonly Surface[]): void {
+    const doc = this.win.document;
+    const y = this.win.scrollY + (doc.body ? doc.body.scrollTop : 0);
+    if (y > this.scrollY + 1) this.lastScrollDown = this.simTime;
+    this.scrollY = y;
+    const added = list.filter((s) => !this.seen.has(s.id)).map((s) => s.id);
+    this.seen = new Set(list.map((s) => s.id));
+    // Ledges are re-measured a moment after a scroll, and pages often fade content in, so
+    // anything that turns up shortly after scrolling down counts as revealed by it.
+    const recentlyDown = this.simTime - this.lastScrollDown < REVEAL.afterScrollMs;
+    if (!recentlyDown || !added.length || this.simTime - this.lastReveal < REVEAL.everyMs) return;
+    this.lastReveal = this.simTime;
+    this.fresh = { ids: added, until: this.simTime + REVEAL.preferMs };
+    this.emit('scroll-reveal', { count: added.length });
   }
 
   /** Emit "near" when the cursor comes close, once per approach. */

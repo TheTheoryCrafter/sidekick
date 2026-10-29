@@ -38,6 +38,13 @@ describe('findJumpTarget', () => {
     expect(t.x).toBeLessThanOrEqual(468);
   });
 
+  it('prefers ledges that just scrolled into view, when one is in reach', () => {
+    const s: Surface[] = [{ id: 1, left: 300, right: 500, top: 700 }, { id: 2, left: 320, right: 520, top: 650 }, { id: 3, left: 280, right: 480, top: 720 }];
+    for (const r of [0, 0.3, 0.6, 0.99]) expect(findJumpTarget({ x: 350, y: 800 }, null, s, lim, () => r, [2])!.id).toBe(2);
+    // Nothing preferred is reachable: any ledge will do.
+    expect(findJumpTarget({ x: 350, y: 800 }, null, s, lim, () => 0, [99])!.id).not.toBeNull();
+  });
+
   it('skips surfaces too high, too far, off-screen, or the one it stands on', () => {
     const s: Surface[] = [
       { id: 1, left: 300, right: 500, top: 800 - 64 * JUMP.maxUp - 10 }, // too high

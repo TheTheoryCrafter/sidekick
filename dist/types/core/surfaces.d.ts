@@ -37,7 +37,10 @@ export declare const JUMP: {
  * the highest top edge it crossed on the way down.
  */
 export declare function landingSurface(prevY: number, y: number, x: number, surfaces: readonly Surface[]): Surface | null;
-/** Somewhere new to jump to from (x, y), or null when nothing is in reach. */
-export declare function findJumpTarget(from: Vec, on: number | null, surfaces: readonly Surface[], lim: JumpLimits, rng: Rng): JumpTarget | null;
+/**
+ * Somewhere new to jump to from (x, y), or null when nothing is in reach. When some of the
+ * reachable surfaces are in `prefer` (ledges that just scrolled into view), one of those wins.
+ */
+export declare function findJumpTarget(from: Vec, on: number | null, surfaces: readonly Surface[], lim: JumpLimits, rng: Rng, prefer?: readonly number[]): JumpTarget | null;
 /** Launch velocity for a ballistic jump from `from` to `to` under `gravity` (px/s²). */
 export declare function jumpVelocity(from: Vec, to: Vec, apexRise: number, gravity: number, minY?: number): Vec;

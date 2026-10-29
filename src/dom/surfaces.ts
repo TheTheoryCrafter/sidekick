@@ -12,6 +12,8 @@ export const DEFAULT_SURFACE_SELECTOR = [
   'section', '[role="button"]', '[data-sidekick-surface]',
   // Links count only when they look like buttons (see drawsABox).
   'a',
+  // Plain boxes count only when they look like cards (see looksLikeCard).
+  'div',
 ].join(',');
 
 /**
@@ -39,6 +41,44 @@ export function drawsABox(style: Pick<CSSStyleDeclaration, 'backgroundColor' | '
   if (style.backgroundImage && style.backgroundImage !== 'none') return true;
   const border = parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== 'none' && style.borderTopStyle !== 'hidden';
   return border && colorAlpha(style.borderTopColor) > 0.05;
+}
+
+/**
+ * Containers that are often just layout or background: the pet stands on them only when they
+ * look like a card (see looksLikeCard) or opt in with data-sidekick-surface.
+ */
+export const NEEDS_A_CARD: ReadonlySet<string> = new Set([
+  'DIV', 'SECTION', 'ARTICLE', 'ASIDE', 'HEADER', 'FOOTER', 'NAV', 'FORM', 'FIELDSET',
+]);
+
+type CardStyle = Pick<CSSStyleDeclaration, 'backgroundColor' | 'borderTopWidth' | 'borderTopStyle' | 'borderTopColor' | 'boxShadow' | 'position' | 'opacity'>;
+
+/** Parsed rgb of a computed colour, or null. */
+export function colorRgb(color: string): [number, number, number] | null {
+  const m = /^rgba?\(([^)]*)\)$/.exec(color.trim());
+  if (!m) return null;
+  const p = m[1]!.split(/[\s,/]+/).filter(Boolean).slice(0, 3).map(Number);
+  return p.length === 3 && p.every((n) => Number.isFinite(n)) ? (p as [number, number, number]) : null;
+}
+
+/**
+ * A box drawn as a card: a visible top border, a shadow, or a fill that stands out from
+ * what is behind it. Never a background: gradients alone don't count, a box as wide as the
+ * page counts only with a visible top border line, and a fixed or absolute box covering much
+ * of the screen (an overlay) never does.
+ */
+export function looksLikeCard(style: CardStyle, box: { width: number; height: number; viewportWidth: number; viewportHeight: number; behind: string }): boolean {
+  if (parseFloat(style.opacity) < 0.5) return false;
+  const area = (box.width * box.height) / Math.max(1, box.viewportWidth * box.viewportHeight);
+  if ((style.position === 'fixed' || style.position === 'absolute') && area > 0.4) return false;
+  const topLine = parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== 'none' && style.borderTopStyle !== 'hidden' && colorAlpha(style.borderTopColor) > 0.05;
+  if (box.width >= box.viewportWidth * 0.95) return topLine;
+  if (topLine) return true;
+  if (style.boxShadow && style.boxShadow !== 'none') return true;
+  const own = colorRgb(style.backgroundColor), back = colorRgb(box.behind);
+  if (!own || colorAlpha(style.backgroundColor) <= 0.05) return false;
+  if (!back) return true;
+  return Math.abs(own[0] - back[0]) + Math.abs(own[1] - back[1]) + Math.abs(own[2] - back[2]) > 24;
 }
 
 export const SCAN = {
@@ -146,7 +186,8 @@ export class SurfaceScanner {
     }
     this.elements = found
       .filter((el) => !this.host.contains(el) && !el.closest('[data-sidekick-ignore]'))
-      .filter((el) => !NEEDS_A_BOX.has(el.tagName) || el.matches('[data-sidekick-surface],[role="button"]') || this.isBoxed(el))
+      .filter((el) => el.matches('[data-sidekick-surface],[role="button"]') ||
+        (NEEDS_A_BOX.has(el.tagName) ? this.isBoxed(el) : NEEDS_A_CARD.has(el.tagName) ? this.isCard(el) : true))
       .slice(0, SCAN.maxCandidates);
     this.byId.clear();
     for (const el of this.elements) {
@@ -165,6 +206,30 @@ export class SurfaceScanner {
     } catch {
       return false;
     }
+  }
+
+  private isCard(el: Element): boolean {
+    try {
+      const doc = this.win.document;
+      const r = el.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return false;
+      return looksLikeCard(this.win.getComputedStyle(el), {
+        width: r.width, height: r.height,
+        viewportWidth: doc.documentElement.clientWidth, viewportHeight: doc.documentElement.clientHeight,
+        behind: this.colourBehind(el),
+      });
+    } catch {
+      return false;
+    }
+  }
+
+  /** The nearest mostly opaque background colour behind an element, from its ancestors. */
+  private colourBehind(el: Element): string {
+    for (let p = el.parentElement; p; p = p.parentElement) {
+      const bg = this.win.getComputedStyle(p).backgroundColor;
+      if (colorAlpha(bg) > 0.5) return bg;
+    }
+    return 'rgb(255, 255, 255)';
   }
 
   private measure(lim: Limits): Surface[] {
